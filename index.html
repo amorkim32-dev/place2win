@@ -425,5 +425,210 @@ async function loadMatches() {
 } startApp();
 </script>
 
-</body>
+<!-- PLACE2WIN ADMIN PANEL -->
+<section id="adminPanel" style="display:none; padding:20px;">
+  <div class="card">
+    <h2>🔐 Place2Win Admin Panel</h2>
+    <p>Add and manage football predictions.</p>
+
+    <form id="matchForm">
+      <input id="homeTeam" placeholder="Home team" required
+        style="width:100%;padding:12px;margin:6px 0;">
+
+      <input id="awayTeam" placeholder="Away team" required
+        style="width:100%;padding:12px;margin:6px 0;">
+
+      <input id="competition" placeholder="Competition" required
+        style="width:100%;padding:12px;margin:6px 0;">
+
+      <input id="prediction" placeholder="Prediction" required
+        style="width:100%;padding:12px;margin:6px 0;">
+
+      <input id="odds" type="number" step="0.01" min="1"
+        placeholder="Odds (e.g. 1.85)" required
+        style="width:100%;padding:12px;margin:6px 0;">
+
+      <label style="display:block;margin:12px 0;">
+        <input id="isVip" type="checkbox">
+        VIP prediction
+      </label>
+
+      <button type="submit" class="button">
+        ➕ Add Match
+      </button>
+    </form>
+
+    <p id="adminMessage" role="status"></p>
+
+    <h3>Existing Matches</h3>
+    <div id="adminMatches">Loading matches...</div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const ADMIN_EMAIL = "amorkim32@gmail.com";
+  const panel = document.getElementById("adminPanel");
+  const form = document.getElementById("matchForm");
+  const message = document.getElementById("adminMessage");
+  const matchList = document.getElementById("adminMatches");
+
+  function say(text) {
+    message.textContent = text;
+  }
+
+  async function initAdmin() {
+    if (!window.supabase) {
+      say("Supabase client is not available.");
+      return;
+    }
+
+    // Use the existing Supabase client from your website.
+    const client = window.supabaseClient;
+
+    if (!client || typeof client.from !== "function") {
+      say("Admin connection not found. We need to connect your existing Supabase client.");
+      return;
+    }
+
+    const { data, error } = await client.auth.getUser();
+
+    if (error || !data.user ||
+        data.user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      say("Admin access denied. Please log in with your admin account.");
+      return;
+    }
+
+    panel.style.display = "block";
+    await loadMatches(client);
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const home_team = document.getElementById("homeTeam").value.trim();
+      const away_team = document.getElementById("awayTeam").value.trim();
+      const competition = document.getElementById("competition").value.trim();
+      const prediction = document.getElementById("prediction").value.trim();
+      const odds = Number(document.getElementById("odds").value);
+      const is_vip = document.getElementById("isVip").checked;
+
+      if (!home_team || !away_team || !competition ||
+          !prediction || !Number.isFinite(odds) || odds < 1) {
+        say("Please check all fields.");
+        return;
+      }
+
+      say("Adding match...");
+
+      const { error: insertError } = await client
+        .from("matches")
+        .insert([{
+          home_team,
+          away_team,
+          competition,
+          prediction,
+          odds,
+          is_vip
+        }]);
+
+      if (insertError) {
+        say("Could not add match: " + insertError.message);
+        return;
+      }
+
+      form.reset();
+      say("Match added successfully!");
+      await loadMatches(client);
+    });
+  }
+
+  async function loadMatches(client) {
+    matchList.textContent = "Loading matches...";
+
+    const { data, error } = await client
+      .from("matches")
+      .select("id,home_team,away_team,competition,prediction,odds,is_vip")
+      .order("id", { ascending: false });
+
+    if (error) {
+      matchList.textContent = "Could not load matches: " + error.message;
+      return;
+    }
+
+    matchList.replaceChildren();
+
+    if (!data || data.length === 0) {
+      matchList.textContent = "No matches yet.";
+      return;
+    }
+
+    data.forEach(function (match) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.margin = "12px 0";
+
+      const title = document.createElement("h4");
+      title.textContent = match.home_team + " vs " + match.away_team;
+
+      const details = document.createElement("p");
+      details.textContent =
+        match.competition + " | " + match.prediction +
+        " | Odds: " + match.odds +
+        (match.is_vip ? " | VIP" : " | Free");
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "✏️ Edit";
+      editButton.type = "button";
+      editButton.onclick = async function () {
+        const prediction = prompt("Enter the new prediction:", match.prediction);
+        if (prediction === null || !prediction.trim()) return;
+
+        const oddsText = prompt("Enter the new odds:", match.odds);
+        if (oddsText === null) return;
+
+        const odds = Number(oddsText);
+        if (!Number.isFinite(odds) || odds < 1) {
+          alert("Enter valid odds.");
+          return;
+        }
+
+        const { error } = await client.from("matches")
+          .update({ prediction: prediction.trim(), odds })
+          .eq("id", match.id);
+
+        if (error) {
+          alert("Update failed: " + error.message);
+        } else {
+          say("Match updated.");
+          await loadMatches(client);
+        }
+      };
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "🗑️ Delete";
+      deleteButton.type = "button";
+      deleteButton.style.marginLeft = "8px";
+      deleteButton.onclick = async function () {
+        if (!confirm("Delete this match?")) return;
+
+        const { error } = await client.from("matches")
+          .delete()
+          .eq("id", match.id);
+
+        if (error) {
+          alert("Delete failed: " + error.message);
+        } else {
+          say("Match deleted.");
+          await loadMatches(client);
+        }
+      };
+
+      card.append(title, details, editButton, deleteButton);
+      matchList.appendChild(card);
+    });
+  }
+
+  initAdmin();
+})();
+</script> </body>
 </html>
