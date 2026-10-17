@@ -391,10 +391,10 @@ async function loadMatches() {
     .order("id", { ascending: false });
 
   if (error) {
-    list.innerHTML = "<p>Could not load matches. Please try again later.</p>";
-    console.error(error);
-    return;
-  }
+  list.textContent = "Database error: " + error.message;
+  console.error(error);
+  return;
+}
 
   if (!data || data.length === 0) {
     list.innerHTML = "<p>No matches published yet.</p>";
