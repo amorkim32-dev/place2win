@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Place2Win | Football Tips</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101010;color:white;font-family:Arial,sans-serif}
+header{background:#181818;padding:20px;border-bottom:1px solid #d4af37}
+.logo{font-size:27px;font-weight:bold;color:#d4af37}
+.logo span{color:white}
+nav{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}
+nav a{color:white;text-decoration:none;font-size:14px}
+.hero{text-align:center;padding:45px 20px;background:linear-gradient(135deg,#24200e,#111)}
+.hero h1{font-size:36px;margin:10px 0;color:#d4af37}
+.hero p{color:#ccc;line-height:1.6}
+button,.btn{background:#d4af37;color:#111;border:0;padding:13px 18px;border-radius:6px;font-weight:bold;cursor:pointer}
+section{padding:22px 16px;max-width:800px;margin:auto}
+h2{color:#d4af37}
+.card{background:#1c1c1c;border:1px solid #38332a;border-radius:10px;padding:18px;margin:14px 0}
+.match{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.tag{color:#d4af37;font-size:12px}
+.price{font-size:27px;color:#d4af37;font-weight:bold}
+ul{padding-left:20px;line-height:2}
+input{width:100%;padding:13px;margin:8px 0;background:#111;color:white;border:1px solid #555;border-radius:5px}
+footer{text-align:center;padding:25px;color:#999;border-top:1px solid #333}
+.notice{font-size:13px;color:#bbb;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">PLACE<span>2WIN</span> 👑</div>
+<nav>
+<a href="#home">Home</a>
+<a href="#matches">Free Tips</a>
+<a href="#vip">VIP Membership</a>
+<a href="#join">Join Us</a>
+</nav>
+</header>
+
+<div class="hero" id="home">
+<p>YOUR GAME. YOUR ANALYSIS. YOUR EDGE.</p>
+<h1>PLACE2WIN</h1>
+<p>Football predictions and match analysis<br>Welcome to the VIP experience.</p>
+<a class="btn" href="#vip" style="text-decoration:none;display:inline-block">Explore VIP Plans</a>
+</div>
+
+<section id="matches">
+<h2>⚽ Featured Predictions</h2>
+<div class="card">
+<div class="tag">FREE TIP · DEMO</div>
+<div class="match">
+<strong>Home Team vs Away Team</strong>
+<span>Example: Over 1.5 goals</span>
+</div>
+<p class="notice">Demonstration only. Replace with a real match and your own analysis.</p>
+</div>
+<div class="card">
+<div class="tag">MATCH ANALYSIS</div>
+<p>Explore match statistics, recent form and goal trends before making your own decisions.</p>
+</div>
+</section>
+
+<section id="vip">
+<h2>👑 Choose Your VIP Plan</h2>
+<div class="card">
+<h3>Daily VIP</h3>
+<div class="price">KSh 100</div>
+<p>VIP predictions for one day.</p>
+<button onclick="choosePlan('Daily VIP',100)">Subscribe</button>
+</div>
+<div class="card">
+<h3>Weekly VIP</h3>
+<div class="price">KSh 500</div>
+<p>VIP access for seven days.</p>
+<button onclick="choosePlan('Weekly VIP',500)">Subscribe</button>
+</div>
+<div class="card">
+<h3>Monthly VIP</h3>
+<div class="price">KSh 1,500</div>
+<p>VIP access for thirty days.</p>
+<button onclick="choosePlan('Monthly VIP',1500)">Subscribe</button>
+</div>
+</section>
+
+<section id="join">
+<h2>🔐 VIP Subscription</h2>
+<div class="card">
+<p id="selected">Choose a VIP plan above to continue.</p>
+<label for="phone">M-PESA phone number</label>
+<input id="phone" type="tel" placeholder="e.g. 2547XXXXXXXX">
+<button onclick="pay()">Continue to Payment</button>
+<p class="notice" id="message" aria-live="polite"></p>
+<p class="notice">Payment is not connected yet. This demo will not charge you or activate VIP access.</p>
+</div>
+</section>
+
+<footer>
+<div class="logo">PLACE2WIN</div>
+<p>Football predictions and analysis</p>
+<p class="notice">Predictions are uncertain, not guaranteed outcomes. Bet responsibly and only where legal.</p>
+</footer>
+
+<script>
+let plan="",amount=0;
+function choosePlan(name,price){
+plan=name;amount=price;
+document.getElementById("selected").textContent=
+name+" selected — KSh "+price;
+document.getElementById("join").scrollIntoView({behavior:"smooth"});
+}
+function pay(){
+const phone=document.getElementById("phone").value.trim();
+const msg=document.getElementById("message");
+if(!plan){msg.textContent="Please select a VIP plan first.";return;}
+if(!/^2547\d{8}$/.test(phone)){
+msg.textContent="Enter a Kenyan number in format 2547XXXXXXXX.";
+return;
+}
+msg.textContent="Your selection is "+plan+" (KSh "+amount+"). The M-PESA payment system must be connected before payment can proceed.";
+}
+</script>
+</body>
+</html>
