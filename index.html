@@ -364,6 +364,7 @@ async function startApp() {
 
     showAccount(data.session?.user || null);
     showStatus("Account service connected.");
+    await loadMatches();
 
     supabase.auth.onAuthStateChange((_event, session) => {
       showAccount(session?.user || null);
