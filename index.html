@@ -358,6 +358,7 @@ async function startApp() {
       SUPABASE_PUBLISHABLE_KEY
     );
 window.supabaseClient = supabase;
+window.dispatchEvent(new Event("supabase-ready"));
     
     const { data, error } = await supabase.auth.getSession();
 
