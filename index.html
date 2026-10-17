@@ -374,7 +374,54 @@ async function startApp() {
   }
 }
 
-startApp();
+async function loadMatches() {
+  const list = document.getElementById("matchesList");
+
+  if (!supabase) {
+    list.innerHTML = "<p>Match service is not connected.</p>";
+    return;
+  }
+
+  list.innerHTML = "<p>Loading matches...</p>";
+
+  const { data, error } = await supabase
+    .from("matches")
+    .select("id, home_team, away_team, competition, prediction, odds, is_vip")
+    .order("id", { ascending: false });
+
+  if (error) {
+    list.innerHTML = "<p>Could not load matches. Please try again later.</p>";
+    console.error(error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.innerHTML = "<p>No matches published yet.</p>";
+    return;
+  }
+
+  list.innerHTML = "";
+
+  data.forEach(match => {
+    const card = document.createElement("div");
+    card.className = "match";
+
+    const title = document.createElement("h3");
+    title.textContent = `${match.home_team} vs ${match.away_team}`;
+
+    const competition = document.createElement("p");
+    competition.textContent = `Competition: ${match.competition}`;
+
+    const prediction = document.createElement("p");
+    prediction.textContent = `Prediction: ${match.prediction}`;
+
+    const odds = document.createElement("p");
+    odds.textContent = `Odds: ${match.odds}`;
+
+    card.append(title, competition, prediction, odds);
+    list.appendChild(card);
+  });
+} startApp();
 </script>
 
 </body>
