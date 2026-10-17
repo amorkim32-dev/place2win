@@ -357,7 +357,8 @@ async function startApp() {
       SUPABASE_URL,
       SUPABASE_PUBLISHABLE_KEY
     );
-
+window.supabaseClient = supabase;
+    
     const { data, error } = await supabase.auth.getSession();
 
     if (error) throw error;
