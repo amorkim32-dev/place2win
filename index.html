@@ -480,7 +480,7 @@ async function loadMatches() {
   }
 
   async function initAdmin() {
-    if (!window.supabase) {
+    if (!window.supabaseClient) {
       say("Supabase client is not available.");
       return;
     }
