@@ -629,7 +629,8 @@ async function loadMatches() {
     });
   }
 
-  initAdmin();
+  window.addEventListener("supabase-ready", initAdmin);
+if (window.supabaseClient) initAdmin();
 })();
   
 </script></body>
