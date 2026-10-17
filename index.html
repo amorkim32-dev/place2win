@@ -330,9 +330,9 @@ window.signOut = async function () {
 
 async function startApp() {
   if (
-    SUPABASE_URL === "https://wlbwzfxxjfbzpgemuind.supabase.co" ||
-    SUPABASE_PUBLISHABLE_KEY === "sb_publishable_0iPYQg1XrMNbrLCYmBKsRw_W4LQghFo"
-  ) {
+  SUPABASE_URL === "PASTE_YOUR_PROJECT_URL_HERE" ||
+  SUPABASE_PUBLISHABLE_KEY === "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
+) {
     showAccount(null);
     showStatus("Website ready. Add your Supabase URL and publishable key.");
     return;
