@@ -865,10 +865,15 @@ window.submitVipPayment = async function () {
       .eq("user_id", auth.user.id)
       .maybeSingle();
 
-    if (adminError || !admin) {
-      status.textContent = "Access denied: administrator only.";
-      return;
-    }
+    if (adminError) {
+    status.textContent = "Admin check failed: " + adminError.message;
+    return;
+}
+
+if (!admin) {
+    status.textContent = "Admin record not found for your logged-in account.";
+    return;
+}
 
     panel.style.display = "block";
     status.textContent = "Loading payments...";
