@@ -208,6 +208,34 @@ footer {
         VIP access is activated only after payment is verified.
         Never share your M-PESA PIN.
     </p>
+    <h3>🧾 Submit Your M-PESA Payment</h3>
+
+<label for="vipPlan">Choose your VIP plan:</label>
+<select id="vipPlan">
+  <option value="daily">Daily VIP — KSh 100</option>
+  <option value="weekly">Weekly VIP — KSh 500</option>
+  <option value="monthly">Monthly VIP — KSh 1,500</option>
+</select>
+
+<br><br>
+
+<label for="mpesaCode">M-PESA transaction code:</label>
+<input
+  id="mpesaCode"
+  type="text"
+  placeholder="e.g. QAB123XYZ"
+  maxlength="20"
+  autocomplete="off"
+  required
+>
+
+<br><br>
+
+<button type="button" onclick="submitVipPayment()">
+  Submit Payment for Verification
+</button>
+
+<p id="paymentStatus" class="notice" aria-live="polite"></p>
   </div>
 </section>
 
@@ -727,5 +755,65 @@ loadLiveFixtures();
 if (window.supabaseClient) initAdmin();
 })();
   
+window.submitVipPayment = async function () {
+  const status = document.getElementById("paymentStatus");
+  const button = document.querySelector(
+    'button[onclick="submitVipPayment()"]'
+  );
+
+  const plan = document.getElementById("vipPlan").value;
+  const code = document.getElementById("mpesaCode").value
+    .trim().toUpperCase();
+
+  const amounts = {
+    daily: 100,
+    weekly: 500,
+    monthly: 1500
+  };
+
+  if (!supabase) {
+    status.textContent = "Payment service unavailable.";
+    return;
+  }
+
+  const { data: { user }, error: authError } =
+    await supabase.auth.getUser();
+
+  if (authError || !user) {
+    status.textContent = "Please log in before submitting payment.";
+    return;
+  }
+
+  if (!/^[A-Z0-9]{8,20}$/.test(code)) {
+    status.textContent = "Enter a valid M-PESA transaction code.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Submitting payment...";
+
+  try {
+    const { error } = await supabase
+      .from("vip_payments")
+      .insert({
+        user_id: user.id,
+        email: user.email,
+        plan: plan,
+        amount: amounts[plan],
+        mpesa_code: code
+      });
+
+    if (error) throw error;
+
+    status.textContent =
+      "Payment submitted! Awaiting manual verification.";
+
+    document.getElementById("mpesaCode").value = "";
+  } catch (error) {
+    status.textContent = "Submission failed: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
 </script></body>
 </html>
