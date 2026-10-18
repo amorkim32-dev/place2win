@@ -815,5 +815,21 @@ window.submitVipPayment = async function () {
     button.disabled = false;
   }
 };
-</script></body>
+</script>. <!-- PLACE2WIN VIP PAYMENT MANAGEMENT -->
+<section id="vipAdminPanel" style="display:none; padding:20px;">
+  <div class="card">
+    <h2>💳 VIP Payment Management</h2>
+    <p>Review M-PESA payments and verify transactions before approval.</p>
+
+    <button type="button" onclick="loadVipAdminPayments()">
+      🔄 Refresh Payments
+    </button>
+
+    <p id="vipAdminStatus" class="notice" aria-live="polite"></p>
+
+    <div id="vipAdminPayments">
+      <p>Payments will appear here after you load them.</p>
+    </div>
+  </div>
+</section></body>
 </html>
