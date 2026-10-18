@@ -624,7 +624,9 @@ loadLiveFixtures();
 
     panel.style.display = "block";
     await loadMatches(client);
-
+if (typeof window.loadVipAdminPayments === "function") {
+  await window.loadVipAdminPayments();
+}
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
