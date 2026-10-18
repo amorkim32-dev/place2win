@@ -113,6 +113,126 @@ footer {
 }
 
 .hidden { display: none; }
+  /* Place2Win modern design upgrade */
+body {
+  background: #07111f;
+  color: #f1f5f9;
+}
+
+header {
+  background: linear-gradient(135deg, #0b1728, #12243a);
+  border-bottom: 2px solid #22c55e;
+  padding: 18px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+}
+
+.logo {
+  color: #22c55e;
+  letter-spacing: 1px;
+}
+
+.logo span {
+  color: #facc15;
+}
+
+button {
+  background: #22c55e;
+  color: #07111f;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+.hero {
+  background: linear-gradient(135deg, #10243a, #07111f);
+  padding: 35px 20px;
+  border-bottom: 1px solid #24364b;
+}
+
+.hero h1 {
+  font-size: clamp(28px, 6vw, 44px);
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+.hero p {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+section {
+  padding: 22px 16px;
+}
+
+section h2 {
+  color: #22c55e;
+  margin-bottom: 18px;
+}
+
+.card {
+  background: linear-gradient(145deg, #142238, #0c1727);
+  border: 1px solid #263a50;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+
+.price {
+  color: #facc15;
+}
+
+.notice {
+  color: #cbd5e1;
+}
+
+nav a {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+nav a:hover {
+  background: #20334a;
+  color: #22c55e;
+}
+
+input,
+select {
+  background: #0b1728;
+  color: white;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 100%;
+}
+
+footer {
+  background: #081321;
+  color: #94a3b8;
+  border-top: 1px solid #263a50;
+}
+
+@media (max-width: 600px) {
+  header {
+    padding: 14px 10px;
+  }
+
+  .logo {
+    font-size: 21px;
+  }
+
+  nav a {
+    margin: 3px;
+    font-size: 13px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+}
 </style>
 </head>
 
