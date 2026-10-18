@@ -771,7 +771,7 @@ window.submitVipPayment = async function () {
     monthly: 1500
   };
 
-  if (!supabase) {
+  if (!window.supabaseClient) {
     status.textContent = "Payment service unavailable.";
     return;
   }
