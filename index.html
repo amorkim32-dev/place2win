@@ -431,7 +431,69 @@ async function loadMatches() {
   });
 } startApp();
 </script>
+<!-- PLACE2WIN LIVE FIXTURES -->
+<script>
+async function loadLiveFixtures() {
+  const status = document.getElementById("liveFixturesStatus");
+  const list = document.getElementById("liveFixturesList");
 
+  if (!status || !list) return;
+
+  status.textContent = "Loading live fixtures...";
+  list.textContent = "";
+
+  try {
+    const response = await fetch(
+      "https://wlbwzfxxfjbzpgemuind.supabase.co/functions/v1/football-fixtures"
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not load fixtures.");
+    }
+
+    const fixtures = data.response || [];
+
+    if (fixtures.length === 0) {
+      status.textContent = "No fixtures available right now.";
+      return;
+    }
+
+    status.textContent = "Football fixtures loaded successfully.";
+
+    fixtures.forEach(item => {
+      const fixture = item.fixture || {};
+      const teams = item.teams || {};
+      const league = item.league || {};
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h3");
+      title.textContent =
+        (teams.home?.name || "Home team") +
+        " vs " +
+        (teams.away?.name || "Away team");
+
+      const competition = document.createElement("p");
+      competition.textContent = league.name || "Football";
+
+      const date = document.createElement("p");
+      date.textContent = fixture.date
+        ? new Date(fixture.date).toLocaleString()
+        : "Date unavailable";
+
+      card.append(title, competition, date);
+      list.appendChild(card);
+    });
+  } catch (error) {
+    status.textContent = "Could not load fixtures: " + error.message;
+  }
+}
+
+loadLiveFixtures();
+  </script>
 <!-- PLACE2WIN ADMIN PANEL -->
 <section id="adminPanel" style="display:none; padding:20px;">
   <div class="card">
