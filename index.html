@@ -831,5 +831,113 @@ window.submitVipPayment = async function () {
       <p>Payments will appear here after you load them.</p>
     </div>
   </div>
-</section></body>
+</section>
+
+<script>
+  async function loadVipAdminPayments() {
+  const panel = document.getElementById("vipAdminPanel");
+  const status = document.getElementById("vipAdminStatus");
+  const list = document.getElementById("vipAdminPayments");
+  const client = window.supabaseClient;
+
+  if (!client) {
+    status.textContent = "Supabase connection unavailable.";
+    return;
+  }
+
+  status.textContent = "Checking administrator access...";
+  list.replaceChildren();
+
+  try {
+    const { data: auth, error: authError } =
+      await client.auth.getUser();
+
+    if (authError || !auth.user) {
+      status.textContent = "Please log in with your admin account.";
+      return;
+    }
+
+    const { data: admin, error: adminError } = await client
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+
+    if (adminError || !admin) {
+      status.textContent = "Access denied: administrator only.";
+      return;
+    }
+
+    panel.style.display = "block";
+    status.textContent = "Loading payments...";
+
+    const { data: payments, error } = await client
+      .from("vip_payments")
+      .select("id, email, plan, amount, mpesa_code, status, submitted_at")
+      .order("submitted_at", { ascending: false });
+
+    if (error) throw error;
+
+    list.replaceChildren();
+
+    if (!payments || payments.length === 0) {
+      list.textContent = "No payment submissions found.";
+      status.textContent = "Payments loaded.";
+      return;
+    }
+
+    payments.forEach((payment) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.margin = "12px 0";
+
+      const details = document.createElement("p");
+      details.textContent =
+        "Email: " + payment.email +
+        " | Plan: " + payment.plan +
+        " | Amount: KSh " + payment.amount +
+        " | M-PESA code: " + payment.mpesa_code +
+        " | Status: " + payment.status;
+
+      card.appendChild(details);
+
+      if (payment.status === "pending") {
+        const approve = document.createElement("button");
+        approve.textContent = "Approve";
+        approve.type = "button";
+
+        approve.onclick = async () => {
+          alert(
+            "Before approval, verify the M-PESA transaction independently. " +
+            "We still need to configure secure payment-status updates."
+          );
+        };
+
+        const reject = document.createElement("button");
+        reject.textContent = "Reject";
+        reject.type = "button";
+        reject.style.marginLeft = "8px";
+
+        reject.onclick = async () => {
+          alert(
+            "We still need to configure secure payment-status updates."
+          );
+        };
+
+        card.append(approve, reject);
+      }
+
+      list.appendChild(card);
+    });
+
+    status.textContent = "Payments loaded successfully.";
+  } catch (error) {
+    status.textContent = "Could not load payments: " + error.message;
+  }
+}
+
+window.loadVipAdminPayments = loadVipAdminPayments;
+</script>
+
+</body>
 </html>
