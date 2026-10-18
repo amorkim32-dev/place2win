@@ -277,8 +277,10 @@ function showStatus(message) {
 }
 
 function showPaymentNotice() {
-  document.getElementById("paymentMessage").textContent =
-    "M-PESA payments are not connected yet. Please do not send money.";
+    document.getElementById("paymentMessage").scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
 }
 
 window.showPaymentNotice = showPaymentNotice;
