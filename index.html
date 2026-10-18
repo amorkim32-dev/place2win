@@ -937,6 +937,9 @@ window.submitVipPayment = async function () {
 }
 
 window.loadVipAdminPayments = loadVipAdminPayments;
+  if (window.supabaseClient) {
+  loadVipAdminPayments();
+  }
 </script>
 
 </body>
