@@ -185,7 +185,7 @@ footer {
     <h3>Monthly VIP</h3>
     <p class="price">KSh 1,500</p>
     <p>Membership for one month.</p>
-    <button onclick="showPaymentNotice()">Choose Monthly</button>
+    <button onclick="showPaymentNotice(); document.getElementById('paymentMessage').scrollIntoView({behavior:'smooth'});">Choose Monthly</button>
   </div>
 
   <div class="card" id="paymentMessage">
