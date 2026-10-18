@@ -777,7 +777,7 @@ window.submitVipPayment = async function () {
   }
 
   const { data: { user }, error: authError } =
-    await supabase.auth.getUser();
+      await window.supabaseClient.auth.getUser();
 
   if (authError || !user) {
     status.textContent = "Please log in before submitting payment.";
@@ -793,7 +793,7 @@ window.submitVipPayment = async function () {
   status.textContent = "Submitting payment...";
 
   try {
-    const { error } = await supabase
+    const { error } = await window.supabaseClient
       .from("vip_payments")
       .insert({
         user_id: user.id,
