@@ -478,7 +478,12 @@ async function loadMatches() {
     competition.textContent = `Competition: ${match.competition}`;
 
     const prediction = document.createElement("p");
-    prediction.textContent = `Prediction: ${match.prediction}`;
+
+if (match.is_vip) {
+  prediction.textContent = "🔒 VIP Prediction — Subscribe to unlock";
+} else {
+  prediction.textContent = `Prediction: ${match.prediction}`;
+}
 
     const odds = document.createElement("p");
     odds.textContent = `Odds: ${match.odds}`;
