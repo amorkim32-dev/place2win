@@ -909,11 +909,24 @@ window.submitVipPayment = async function () {
         approve.type = "button";
 
         approve.onclick = async () => {
-          alert(
-            "Before approval, verify the M-PESA transaction independently. " +
-            "We still need to configure secure payment-status updates."
-          );
-        };
+    if (!confirm("Have you verified this M-PESA payment?")) return;
+
+    approve.disabled = true;
+
+    const { error } = await client
+        .from("vip_payments")
+        .update({ status: "approved" })
+        .eq("id", payment.id);
+
+    if (error) {
+        alert("Approval failed: " + error.message);
+        approve.disabled = false;
+        return;
+    }
+
+    alert("Payment approved successfully!");
+    await loadVipAdminPayments();
+};
 
         const reject = document.createElement("button");
         reject.textContent = "Reject";
@@ -921,10 +934,24 @@ window.submitVipPayment = async function () {
         reject.style.marginLeft = "8px";
 
         reject.onclick = async () => {
-          alert(
-            "We still need to configure secure payment-status updates."
-          );
-        };
+    if (!confirm("Are you sure you want to reject this payment?")) return;
+
+    reject.disabled = true;
+
+    const { error } = await client
+        .from("vip_payments")
+        .update({ status: "rejected" })
+        .eq("id", payment.id);
+
+    if (error) {
+        alert("Rejection failed: " + error.message);
+        reject.disabled = false;
+        return;
+    }
+
+    alert("Payment rejected.");
+    await loadVipAdminPayments();
+};
 
         card.append(approve, reject);
       }
