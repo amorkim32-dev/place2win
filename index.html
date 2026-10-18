@@ -758,64 +758,76 @@ if (window.supabaseClient) initAdmin();
 })();
   
 window.submitVipPayment = async function () {
-  const status = document.getElementById("paymentStatus");
-  const button = document.querySelector(
-    'button[onclick="submitVipPayment()"]'
-  );
+    const status = document.getElementById("paymentStatus");
+    const button = document.querySelector(
+        'button[onclick="submitVipPayment()"]'
+    );
 
-  const plan = document.getElementById("vipPlan").value;
-  const code = document.getElementById("mpesaCode").value
-    .trim().toUpperCase();
+    const plan = document.getElementById("vipPlan").value;
+    const code = document.getElementById("mpesaCode").value
+        .trim()
+        .toUpperCase();
 
-  const amounts = {
-    daily: 100,
-    weekly: 500,
-    monthly: 1500
-  };
+    const phoneInput = document.getElementById("vipPhone");
+    const phone = phoneInput ? phoneInput.value.trim() : "";
 
-  if (!window.supabaseClient) {
-    status.textContent = "Payment service unavailable.";
-    return;
-  }
+    const amounts = {
+        daily: 100,
+        weekly: 500,
+        monthly: 1500
+    };
 
-  const { data: { user }, error: authError } =
-      await window.supabaseClient.auth.getUser();
+    if (!window.supabaseClient) {
+        status.textContent = "Payment service unavailable.";
+        return;
+    }
 
-  if (authError || !user) {
-    status.textContent = "Please log in before submitting payment.";
-    return;
-  }
+    if (!amounts[plan]) {
+        status.textContent = "Please select a valid VIP plan.";
+        return;
+    }
 
-  if (!/^[A-Z0-9]{8,20}$/.test(code)) {
-    status.textContent = "Enter a valid M-PESA transaction code.";
-    return;
-  }
+    if (!/^[A-Z0-9]{8,20}$/.test(code)) {
+        status.textContent = "Enter a valid M-PESA transaction code.";
+        return;
+    }
 
-  button.disabled = true;
-  status.textContent = "Submitting payment...";
+    if (!/^(?:\+?254|0)7\d{8}$/.test(phone)) {
+        status.textContent =
+            "Enter a valid Kenyan M-PESA phone number.";
+        return;
+    }
 
-  try {
-    const { error } = await window.supabaseClient
-      .from("vip_payments")
-      .insert({
-        user_id: user.id,
-        email: user.email,
-        plan: plan,
-        amount: amounts[plan],
-        mpesa_code: code
-      });
+    button.disabled = true;
+    status.textContent = "Submitting payment...";
 
-    if (error) throw error;
+    try {
+        const { error } = await window.supabaseClient
+            .from("vip_payments")
+            .insert({
+                user_id: null,
+                email: null,
+                phone_number: phone,
+                plan: plan,
+                amount: amounts[plan],
+                mpesa_code: code,
+                status: "pending"
+            });
 
-    status.textContent =
-      "Payment submitted! Awaiting manual verification.";
+        if (error) throw error;
 
-    document.getElementById("mpesaCode").value = "";
-  } catch (error) {
-    status.textContent = "Submission failed: " + error.message;
-  } finally {
-    button.disabled = false;
-  }
+        status.textContent =
+            "Payment submitted! Awaiting manual verification.";
+
+        document.getElementById("mpesaCode").value = "";
+        phoneInput.value = "";
+
+    } catch (error) {
+        status.textContent =
+            "Submission failed: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
 };
 </script>. <!-- PLACE2WIN VIP PAYMENT MANAGEMENT -->
 <section id="vipAdminPanel" style="display:block; padding:20px;">
