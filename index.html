@@ -171,7 +171,7 @@ footer {
     <h3>Daily VIP</h3>
     <p class="price">KSh 100</p>
     <p>Membership for one day.</p>
-    <button onclick="showPaymentNotice()">Choose Daily</button>
+    <button onclick="showPaymentNotice(); document.getElementById('paymentMessage').scrollIntoView({behavior:'smooth'});">Choose Daily</button>
   </div>
 
   <div class="card">
