@@ -773,16 +773,33 @@ if (countryFilter) {
     competition.textContent = item.league?.name || "Football";
 const flag = document.createElement("span");
 const countryFlags = {
-    "England": "🏴",
-    "Spain": "🇪🇸",
-    "Italy": "🇮🇹",
-    "Germany": "🇩🇪",
-    "France": "🇫🇷",
-    "Portugal": "🇵🇹",
-    "Kenya": "🇰🇪",
-    "Saudi Arabia": "🇸🇦",
-    "Kuwait": "🇰🇼",
-    "International": "🌍"
+    "England":"🏴","Scotland":"🏴","Wales":"🏴","Northern Ireland":"🇬🇧",
+    "Spain":"🇪🇸","Italy":"🇮🇹","Germany":"🇩🇪","France":"🇫🇷",
+    "Portugal":"🇵🇹","Netherlands":"🇳🇱","Belgium":"🇧🇪","Turkey":"🇹🇷",
+    "Türkiye":"🇹🇷","Greece":"🇬🇷","Switzerland":"🇨🇭","Austria":"🇦🇹",
+    "Denmark":"🇩🇰","Sweden":"🇸🇪","Norway":"🇳🇴","Finland":"🇫🇮",
+    "Ireland":"🇮🇪","Poland":"🇵🇱","Czech Republic":"🇨🇿","Czechia":"🇨🇿",
+    "Croatia":"🇭🇷","Serbia":"🇷🇸","Ukraine":"🇺🇦","Romania":"🇷🇴",
+    "Hungary":"🇭🇺","Slovakia":"🇸🇰","Slovenia":"🇸🇮","Bulgaria":"🇧🇬",
+    "Russia":"🇷🇺","Iceland":"🇮🇸","Israel":"🇮🇱","Cyprus":"🇨🇾",
+    "Brazil":"🇧🇷","Argentina":"🇦🇷","Uruguay":"🇺🇾","Chile":"🇨🇱",
+    "Colombia":"🇨🇴","Ecuador":"🇪🇨","Peru":"🇵🇪","Paraguay":"🇵🇾",
+    "Bolivia":"🇧🇴","Venezuela":"🇻🇪","Mexico":"🇲🇽","USA":"🇺🇸",
+    "United States":"🇺🇸","Canada":"🇨🇦","Costa Rica":"🇨🇷",
+    "Honduras":"🇭🇳","Guatemala":"🇬🇹","Panama":"🇵🇦","Jamaica":"🇯🇲",
+    "Japan":"🇯🇵","South Korea":"🇰🇷","Korea Republic":"🇰🇷",
+    "China":"🇨🇳","Australia":"🇦🇺","New Zealand":"🇳🇿","India":"🇮🇳",
+    "Thailand":"🇹🇭","Vietnam":"🇻🇳","Indonesia":"🇮🇩","Malaysia":"🇲🇾",
+    "Singapore":"🇸🇬","Philippines":"🇵🇭","Iran":"🇮🇷","Iraq":"🇮🇶",
+    "Saudi Arabia":"🇸🇦","United Arab Emirates":"🇦🇪","Qatar":"🇶🇦",
+    "Kuwait":"🇰🇼","Bahrain":"🇧🇭","Oman":"🇴🇲","Jordan":"🇯🇴",
+    "Lebanon":"🇱🇧","Egypt":"🇪🇬","Morocco":"🇲🇦","Algeria":"🇩🇿",
+    "Tunisia":"🇹🇳","South Africa":"🇿🇦","Nigeria":"🇳🇬","Ghana":"🇬🇭",
+    "Kenya":"🇰🇪","Tanzania":"🇹🇿","Uganda":"🇺🇬","Ethiopia":"🇪🇹",
+    "Senegal":"🇸🇳","Cameroon":"🇨🇲","Ivory Coast":"🇨🇮",
+    "Côte d'Ivoire":"🇨🇮","Mali":"🇲🇱","Zambia":"🇿🇲","Zimbabwe":"🇿🇼",
+    "Angola":"🇦🇴","DR Congo":"🇨🇩","Congo":"🇨🇬","Libya":"🇱🇾",
+    "Sudan":"🇸🇩","World":"🌍","International":"🌍"
 };
 
 flag.textContent =
