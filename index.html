@@ -647,7 +647,7 @@ async function loadLiveFixtures() {
         }
     }
 );
-
+status.textContent = "Received response. Reading fixtures...";
         const data = await response.json();
 
         if (!response.ok) {
@@ -655,7 +655,7 @@ async function loadLiveFixtures() {
         }
 
         const fixtures = data.response || [];
-
+status.textContent = "Received " + fixtures.length + " fixtures. Preparing display...";
         if (!fixtures.length) {
             status.textContent = "No fixtures available right now.";
             return;
