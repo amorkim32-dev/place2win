@@ -783,11 +783,12 @@ if (dateFilter) {
         control.onchange = renderFixtures;
     }
 });
-            if (control) {
-                control.oninput = renderFixtures;
-                control.onchange = renderFixtures;
-            }
-        });
+            [teamSearch, leagueFilter, dateFilter].forEach(control => {
+    if (control) {
+        control.oninput = renderFixtures;
+        control.onchange = renderFixtures;
+    }
+});
 
         renderFixtures();
 
