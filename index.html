@@ -719,27 +719,30 @@ async function loadLiveFixtures() {
             }
 
             filtered.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "card";
+    const card = document.createElement("div");
+    card.className = "card";
 
-                const title = document.createElement("h3");
-                title.textContent =
-                    (item.teams?.home?.name || "Home team") +
-                    " vs " +
-                    (item.teams?.away?.name || "Away team");
+    const title = document.createElement("h3");
+    title.textContent =
+        (item.teams?.home?.name || "Home team") +
+        " vs " +
+        (item.teams?.away?.name || "Away team");
 
-                const competition = document.createElement("p");
-                competition.textContent =
-                    item.league?.name || "Football";
+    const competition = document.createElement("p");
+    competition.textContent = item.league?.name || "Football";
 
-                const date = document.createElement("p");
-                date.textContent = item.fixture?.date
-                    ? new Date(item.fixture.date).toLocaleString()
-                    : "Date unavailable";
+    const date = document.createElement("p");
+    date.textContent = item.fixture?.date
+        ? new Date(item.fixture.date).toLocaleString()
+        : "Date unavailable";
 
-                card.append(title, competition, date);
-                list.appendChild(card);
-            });
+    const status = document.createElement("p");
+    status.textContent =
+        item.fixture?.status?.long || "Scheduled";
+
+    card.append(title, competition, date, status);
+    list.appendChild(card);
+});
         }
 
         [teamSearch, leagueFilter, dateFilter].forEach(control => {
