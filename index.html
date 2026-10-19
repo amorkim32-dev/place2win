@@ -639,14 +639,12 @@ async function loadLiveFixtures() {
 
     try {
         const response = await fetch(
-            "https://wlbwzfxkjfbzpgemuind.supabase.co/functions/v1/football-fixtures",
-            {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
+  "https://wlbwzfxxjfbzpgemuind.supabase.co/functions/v1/football-fixtures",
+  {
+    method: "GET",
+    mode: "cors"
+  }
+);
 
         const data = await response.json();
 
