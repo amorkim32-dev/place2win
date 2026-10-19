@@ -626,68 +626,137 @@ if (match.is_vip) {
 <!-- PLACE2WIN LIVE FIXTURES -->
 <script>
 async function loadLiveFixtures() {
-  const status = document.getElementById("liveFixturesStatus");
-  const list = document.getElementById("liveFixturesList");
+    const status = document.getElementById("liveFixturesStatus");
+    const list = document.getElementById("liveFixturesList");
+    const teamSearch = document.getElementById("teamSearch");
+    const leagueFilter = document.getElementById("leagueFilter");
+    const dateFilter = document.getElementById("dateFilter");
 
-  if (!status || !list) return;
+    if (!status || !list) return;
 
-  status.textContent = "Loading live fixtures...";
-  list.textContent = "";
+    status.textContent = "Loading live fixtures...";
+    list.innerHTML = "";
 
-  try {
-    const response = await fetch(
-  "https://wlbwzfxxjfbzpgemuind.supabase.co/functions/v1/football-fixtures",
-  {
-    method: "GET",
-    headers: {
-      "Accept": "application/json"
+    try {
+        const response = await fetch(
+            "https://wlbwzfxkjfbzpgemuind.supabase.co/functions/v1/football-fixtures",
+            {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Could not load fixtures.");
+        }
+
+        const fixtures = data.response || [];
+
+        if (!fixtures.length) {
+            status.textContent = "No fixtures available right now.";
+            return;
+        }
+
+        status.textContent = "Football fixtures loaded successfully.";
+
+        if (leagueFilter) {
+            const previousLeague = leagueFilter.value;
+            const leagues = [...new Set(
+                fixtures.map(item => item.league?.name).filter(Boolean)
+            )].sort();
+
+            leagueFilter.innerHTML =
+                '<option value="">All Leagues</option>';
+
+            leagues.forEach(name => {
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                leagueFilter.appendChild(option);
+            });
+
+            if (leagues.includes(previousLeague)) {
+                leagueFilter.value = previousLeague;
+            }
+        }
+
+        function renderFixtures() {
+            const search = (teamSearch?.value || "")
+                .trim()
+                .toLowerCase();
+
+            const selectedLeague = leagueFilter?.value || "";
+            const selectedDate = dateFilter?.value || "";
+
+            list.innerHTML = "";
+
+            const filtered = fixtures.filter(item => {
+                const home = (item.teams?.home?.name || "")
+                    .toLowerCase();
+                const away = (item.teams?.away?.name || "")
+                    .toLowerCase();
+                const league = item.league?.name || "";
+                const matchDate = item.fixture?.date
+                    ? item.fixture.date.slice(0, 10)
+                    : "";
+
+                return (
+                    (!search ||
+                        home.includes(search) ||
+                        away.includes(search)) &&
+                    (!selectedLeague ||
+                        league === selectedLeague) &&
+                    (!selectedDate ||
+                        matchDate === selectedDate)
+                );
+            });
+
+            if (!filtered.length) {
+                list.textContent = "No matches match your filters.";
+                return;
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const title = document.createElement("h3");
+                title.textContent =
+                    (item.teams?.home?.name || "Home team") +
+                    " vs " +
+                    (item.teams?.away?.name || "Away team");
+
+                const competition = document.createElement("p");
+                competition.textContent =
+                    item.league?.name || "Football";
+
+                const date = document.createElement("p");
+                date.textContent = item.fixture?.date
+                    ? new Date(item.fixture.date).toLocaleString()
+                    : "Date unavailable";
+
+                card.append(title, competition, date);
+                list.appendChild(card);
+            });
+        }
+
+        [teamSearch, leagueFilter, dateFilter].forEach(control => {
+            if (control) {
+                control.oninput = renderFixtures;
+                control.onchange = renderFixtures;
+            }
+        });
+
+        renderFixtures();
+
+    } catch (error) {
+        status.textContent =
+            "Could not load fixtures: " + error.message;
     }
-  }
-);
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Could not load fixtures.");
-    }
-
-    const fixtures = data.response || [];
-
-    if (fixtures.length === 0) {
-      status.textContent = "No fixtures available right now.";
-      return;
-    }
-
-    status.textContent = "Football fixtures loaded successfully.";
-
-    fixtures.forEach(item => {
-      const fixture = item.fixture || {};
-      const teams = item.teams || {};
-      const league = item.league || {};
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const title = document.createElement("h3");
-      title.textContent =
-        (teams.home?.name || "Home team") +
-        " vs " +
-        (teams.away?.name || "Away team");
-
-      const competition = document.createElement("p");
-      competition.textContent = league.name || "Football";
-
-      const date = document.createElement("p");
-      date.textContent = fixture.date
-        ? new Date(fixture.date).toLocaleString()
-        : "Date unavailable";
-
-      card.append(title, competition, date);
-      list.appendChild(card);
-    });
-  } catch (error) {
-    status.textContent = "Could not load fixtures: " + error.message;
-  }
 }
 
 loadLiveFixtures();
