@@ -669,7 +669,30 @@ status.textContent = "Received " + fixtures.length + " fixtures. Preparing displ
         }
 
         status.textContent = "Football fixtures loaded successfully.";
+// Populate country dropdown
+if (countryFilter) {
+    const previousCountry = countryFilter.value;
 
+    const countries = [...new Set(
+        fixtures
+            .map(item => item.league?.country)
+            .filter(country => country && country.trim())
+    )].sort();
+
+    countryFilter.innerHTML =
+        '<option value="">All Countries</option>';
+
+    countries.forEach(country => {
+        const option = document.createElement("option");
+        option.value = country;
+        option.textContent = country;
+        countryFilter.appendChild(option);
+    });
+
+    if (countries.includes(previousCountry)) {
+        countryFilter.value = previousCountry;
+    }
+}
         if (leagueFilter) {
             const previousLeague = leagueFilter.value;
             const leagues = [...new Set(
