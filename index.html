@@ -771,7 +771,24 @@ if (countryFilter) {
 
     const competition = document.createElement("p");
     competition.textContent = item.league?.name || "Football";
+const flag = document.createElement("span");
+const countryFlags = {
+    "England": "🏴",
+    "Spain": "🇪🇸",
+    "Italy": "🇮🇹",
+    "Germany": "🇩🇪",
+    "France": "🇫🇷",
+    "Portugal": "🇵🇹",
+    "Kenya": "🇰🇪",
+    "Saudi Arabia": "🇸🇦",
+    "Kuwait": "🇰🇼",
+    "International": "🌍"
+};
 
+flag.textContent =
+    (countryFlags[item.league?.country] || "🌍") + " ";
+
+competition.prepend(flag);
     const date = document.createElement("p");
     date.textContent = item.fixture?.date
         ? new Date(item.fixture.date).toLocaleString()
