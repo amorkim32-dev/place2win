@@ -712,6 +712,11 @@ async function loadLiveFixtures() {
                         matchDate === selectedDate)
                 );
             });
+          filtered.sort((a, b) => {
+    const aStarted = a.fixture?.status?.short === "NS" ? 0 : 1;
+    const bStarted = b.fixture?.status?.short === "NS" ? 0 : 1;
+    return aStarted - bStarted;
+});
 
             if (!filtered.length) {
                 list.textContent = "No matches match your filters.";
