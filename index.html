@@ -622,10 +622,24 @@ if (match.is_vip) {
   prediction.textContent = `Prediction: ${match.prediction}`;
 }
 
-    const odds = document.createElement("p");
-    odds.textContent = `Odds: ${match.odds}`;
+    const prediction = document.createElement("p");
+prediction.className = "prediction";
 
-    card.append(title, competition, prediction, odds);
+if (match.is_vip) {
+  prediction.textContent = "🔒 VIP Prediction — Subscribe to unlock";
+} else {
+  prediction.textContent = `🎯 TIP: ${match.prediction || "Not set"}`;
+}
+
+const odds = document.createElement("p");
+odds.textContent = `📊 Odds: ${match.odds ?? "Not set"}`;
+
+const confidence = document.createElement("p");
+confidence.textContent = match.confidence != null
+  ? `🔥 Confidence: ${match.confidence}%`
+  : "🔥 Confidence: Not set";
+
+card.append(title, competition, prediction, odds, confidence);
     list.appendChild(card);
   });
 } startApp();
