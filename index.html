@@ -588,7 +588,7 @@ async function loadMatches() {
 
   const { data, error } = await supabase
     .from("matches")
-    .select("id, home_team, away_team, competition, prediction, odds, is_vip")
+    .select("id, home_team, away_team, competition, prediction, odds, is_vip, confidence")
     .order("id", { ascending: false });
 
   if (error) {
