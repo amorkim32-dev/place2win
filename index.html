@@ -807,7 +807,7 @@ if (dateFilter) {
     }
 }
 
-[teamSearch, leagueFilter, dateFilter].forEach(control => {
+[teamSearch, countryFilter, leagueFilter, dateFilter].forEach(control => {
     if (control) {
         control.oninput = renderFixtures;
         control.onchange = renderFixtures;
