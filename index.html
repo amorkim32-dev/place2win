@@ -750,7 +750,37 @@ async function loadLiveFixtures() {
 });
         }
 
-        [teamSearch, leagueFilter, dateFilter].forEach(control => {
+       // Populate the match date dropdown
+if (dateFilter) {
+    const previousDate = dateFilter.value;
+
+    const dates = [...new Set(
+        fixtures
+            .map(item => item.fixture?.date?.slice(0, 10))
+            .filter(Boolean)
+    )].sort();
+
+    dateFilter.innerHTML =
+        '<option value="">All Dates</option>';
+
+    dates.forEach(date => {
+        const option = document.createElement("option");
+        option.value = date;
+        option.textContent = date;
+        dateFilter.appendChild(option);
+    });
+
+    if (dates.includes(previousDate)) {
+        dateFilter.value = previousDate;
+    }
+}
+
+[teamSearch, leagueFilter, dateFilter].forEach(control => {
+    if (control) {
+        control.oninput = renderFixtures;
+        control.onchange = renderFixtures;
+    }
+});
             if (control) {
                 control.oninput = renderFixtures;
                 control.onchange = renderFixtures;
