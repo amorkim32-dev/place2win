@@ -258,7 +258,17 @@ footer {
   <div class="card">
   <h3>⚽ Live Football Fixtures</h3>
   <p id="liveFixturesStatus">Loading live fixtures...</p>
-  <div id="liveFixturesList"></div>
+  <div class="fixture-filters">
+    <input type="text" id="teamSearch"
+           placeholder="Search team..." />
+
+    <select id="leagueFilter">
+        <option value="">All Leagues</option>
+    </select>
+
+    <input type="date" id="dateFilter" />
+  </div>
+    <div id="liveFixturesList"></div>
   </div>
   <div class="card">
   <h3>⚽ Today's Football Tips</h3>
