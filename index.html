@@ -720,6 +720,7 @@ if (countryFilter) {
                 .toLowerCase();
 
             const selectedLeague = leagueFilter?.value || "";
+          const selectedCountry = countryFilter?.value || "";
             const selectedDate = dateFilter?.value || "";
 
             list.innerHTML = "";
@@ -730,6 +731,7 @@ if (countryFilter) {
                 const away = (item.teams?.away?.name || "")
                     .toLowerCase();
                 const league = item.league?.name || "";
+              const country = item.league?.country || "";
                 const matchDate = item.fixture?.date
                     ? item.fixture.date.slice(0, 10)
                     : "";
