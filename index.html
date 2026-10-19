@@ -651,7 +651,7 @@ async function loadLiveFixtures() {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || "Could not load fixtures.");
+    throw new Error(data.error || "HTTP " + response.status);
         }
 
         const fixtures = data.response || [];
