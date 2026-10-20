@@ -16,28 +16,48 @@ body {
 }
 
 header {
-  background: #181818;
-  padding: 20px;
-  border-bottom: 2px solid #d4af37;
+  background: linear-gradient(135deg, #071426, #10243b);
+  padding: 18px 22px;
+  border-bottom: 2px solid #24c46a;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .logo {
-  font-size: 26px;
-  font-weight: bold;
-  color: #d4af37;
+  font-size: 28px;
+  font-weight: 900;
+  color: #24c46a;
+  letter-spacing: 1px;
 }
 
-.logo span { color: white; }
+.logo span {
+  color: #ffffff;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
 nav a {
-  color: white;
+  color: #e8eef7;
   text-decoration: none;
-  margin: 8px;
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+
+nav a:hover {
+  background: #24c46a;
+  color: #071426;
 }
 
 button {
