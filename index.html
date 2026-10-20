@@ -74,13 +74,43 @@ button:hover { background: #f0d675; }
 
 .hero {
   text-align: center;
-  padding: 45px 20px;
-  background: linear-gradient(135deg, #352900, #111);
+  padding: 65px 20px;
+  background:
+    radial-gradient(ellipse at top right, rgba(36, 196, 106, 0.18), transparent 55%),
+    linear-gradient(135deg, #071426, #10243b, #06101e);
+  border-bottom: 1px solid #24364c;
 }
 
 .hero h1 {
-  color: #d4af37;
-  font-size: 36px;
+  color: #ffffff;
+  font-size: clamp(28px, 5vw, 46px);
+  font-weight: 900;
+  line-height: 1.2;
+  margin: 0 auto 20px;
+  letter-spacing: 1px;
+}
+
+.hero p {
+  color: #cbd5e1;
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0 auto 25px;
+  max-width: 600px;
+}
+
+.hero button {
+  background: linear-gradient(135deg, #24c46a, #159447);
+  color: #061426;
+  padding: 14px 25px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 5px 18px rgba(36, 196, 106, 0.2);
+}
+
+.hero button:hover {
+  background: #35df7d;
+  transform: translateY(-2px);
 }
 
 section {
