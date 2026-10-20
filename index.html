@@ -615,20 +615,12 @@ async function loadMatches() {
     competition.textContent = `Competition: ${match.competition}`;
 
     const prediction = document.createElement("p");
-
-if (match.is_vip) {
-  prediction.textContent = "🔒 VIP Prediction — Subscribe to unlock";
-} else {
-  prediction.textContent = `Prediction: ${match.prediction}`;
-}
-
-    const prediction = document.createElement("p");
 prediction.className = "prediction";
 
 if (match.is_vip) {
   prediction.textContent = "🔒 VIP Prediction — Subscribe to unlock";
 } else {
-  prediction.textContent = `🎯 TIP: ${match.prediction || "Not set"}`;
+  prediction.textContent = "🎯 TIP: " + (match.prediction || "Prediction not available");
 }
 
 const odds = document.createElement("p");
