@@ -867,7 +867,13 @@ disclaimer.textContent =
   "Experimental estimate only; not based on verified team statistics.";
 
 predictionBox.append(heading, result, goals, btts, disclaimer);
-    card.append(title, competition, date, status);
+    card.append(
+  title,
+  competition,
+  date,
+  status,
+  predictionBox
+);
     list.appendChild(card);
 });
         }
