@@ -6,422 +6,303 @@
 <title>Place2Win | Football Tips</title>
 
 <style>
-* { box-sizing: border-box; }
+ * {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #07111f;
+    --panel: #101e32;
+    --panel-light: #172840;
+    --green: #22c55e;
+    --green-dark: #16a34a;
+    --text: #f8fafc;
+    --muted: #a9b8cc;
+    --border: #293b53;
+}
+
+html {
+    scroll-behavior: smooth;
+}
 
 body {
-  margin: 0;
-  background: #050b16;
-  color: #f1f5f9;
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
 }
 
 header {
-  background: linear-gradient(135deg, #071426, #10243b);
-  padding: 18px 22px;
-  border-bottom: 2px solid #24c46a;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    background: #0b1728;
+    border-bottom: 2px solid var(--green);
+    padding: 16px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
+header h1,
+header .logo,
 .logo {
-  font-size: 28px;
-  font-weight: 900;
-  color: #24c46a;
-  letter-spacing: 1px;
-}
-  .logo {
-  font-size: 28px;
-  font-weight: 900;
-  color: #39ff88;
-  letter-spacing: 1px;
-  text-shadow: 0 0 12px rgba(57, 255, 136, 0.3);
-  }
-
-.logo span {
-  color: #ffffff;
+    color: var(--green);
+    margin: 0;
+    font-weight: 800;
 }
 
 nav {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 nav a {
-  color: #e8eef7;
-  text-decoration: none;
-  margin: 0;
-  padding: 10px 13px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
 }
 
 nav a:hover {
-  background: #24c46a;
-  color: #071426;
-}
-
-button {
-  background: #d4af37;
-  color: #111;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover { background: #f0d675; }
-
-.hero {
-  text-align: center;
-  padding: 65px 20px;
-  background:
-    radial-gradient(ellipse at top right, rgba(36, 196, 106, 0.18), transparent 55%),
-    linear-gradient(135deg, #071426, #10243b, #06101e);
-  border-bottom: 1px solid #24364c;
-}
-
-.hero h1 {
-  color: #ffffff;
-  font-size: clamp(28px, 5vw, 46px);
-  font-weight: 900;
-  line-height: 1.2;
-  margin: 0 auto 20px;
-  letter-spacing: 1px;
-}
-
-.hero p {
-  color: #cbd5e1;
-  font-size: 17px;
-  line-height: 1.7;
-  margin: 0 auto 25px;
-  max-width: 600px;
-}
-
-.hero button {
-  background: linear-gradient(135deg, #24c46a, #159447);
-  color: #061426;
-  padding: 14px 25px;
-  border-radius: 9px;
-  font-size: 15px;
-  font-weight: 800;
-  box-shadow: 0 5px 18px rgba(36, 196, 106, 0.2);
-}
-
-.hero button:hover {
-  background: #35df7d;
-  transform: translateY(-2px);
-}
-
-section {
-  padding: 25px 16px;
-  max-width: 900px;
-  margin: auto;
-}
-
-h2 {
-  color: #39ff88;
-  font-weight: 800;
-}
-
-.card {
-  background: linear-gradient(145deg, #101e32, #081321);
-  border: 1px solid #244b3b;
-  border-radius: 16px;
-  padding: 22px;
-  margin: 18px 0;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.2s, transform 0.2s;
-}
-
-.card:hover {
-  border-color: #39ff88;
-  transform: translateY(-2px);
-}
-
-input {
-  display: block;
-  width: 100%;
-  padding: 13px;
-  margin: 10px 0;
-  background: #111;
-  color: white;
-  border: 1px solid #555;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.price {
-  font-size: 27px;
-  color: #d4af37;
-  font-weight: bold;
-}
-
-.notice {
-  color: #bbb;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-#accountArea { display: none; }
-
-footer {
-  text-align: center;
-  padding: 25px;
-  color: #999;
-  border-top: 1px solid #333;
-}
-
-.hidden { display: none; }
-  /* Place2Win modern design upgrade */
-body {
-  background: #07111f;
-  color: #f1f5f9;
-}
-
-header {
-  background: linear-gradient(135deg, #0b1728, #12243a);
-  border-bottom: 2px solid #22c55e;
-  padding: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.3);
-}
-
-.logo {
-  color: #22c55e;
-  letter-spacing: 1px;
-}
-
-.logo span {
-  color: #facc15;
-}
-
-button {
-  background: #22c55e;
-  color: #07111f;
-  border-radius: 10px;
-  transition: 0.2s ease;
-}
-
-button:hover {
-  background: #16a34a;
+    color: var(--green);
 }
 
 .hero {
-  background: linear-gradient(135deg, #10243a, #07111f);
-  padding: 35px 20px;
-  border-bottom: 1px solid #24364b;
+    padding: 70px 20px;
+    text-align: center;
+    background:
+        radial-gradient(ellipse at top, #193553 0%, transparent 65%),
+        linear-gradient(135deg, #101f34, #07111f);
+    border-bottom: 1px solid var(--border);
 }
 
 .hero h1 {
-  font-size: clamp(28px, 6vw, 44px);
-  line-height: 1.2;
-  color: #ffffff;
+    font-size: clamp(30px, 5vw, 54px);
+    line-height: 1.15;
+    margin: 0 auto 18px;
+    max-width: 900px;
 }
 
 .hero p {
-  color: #cbd5e1;
-  line-height: 1.7;
+    color: var(--muted);
+    font-size: 18px;
+    margin-bottom: 25px;
 }
 
 section {
-  padding: 22px 16px;
+    width: min(1200px, 94%);
+    margin: 30px auto;
 }
 
 section h2 {
-  color: #22c55e;
-  margin-bottom: 18px;
+    color: var(--green);
+    font-size: 26px;
+    margin-bottom: 18px;
 }
 
-.card {
-  background: linear-gradient(145deg, #142238, #0c1727);
-  border: 1px solid #263a50;
-  border-radius: 16px;
-  padding: 20px;
-  margin: 16px 0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+h3 {
+    line-height: 1.4;
 }
 
-.price {
-  color: #facc15;
+.card,
+.match-card,
+.prediction-card,
+.plan-card,
+#liveFixturesList > div,
+#matchesList > div {
+    background: linear-gradient(145deg, var(--panel-light), var(--panel));
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.notice {
-  color: #cbd5e1;
+button,
+.button,
+input[type="submit"] {
+    background: var(--green);
+    color: #062012;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
 }
 
-nav a {
-  padding: 8px 10px;
-  border-radius: 8px;
+button:hover,
+.button:hover,
+input[type="submit"]:hover {
+    background: #4ade80;
+    transform: translateY(-1px);
 }
 
-nav a:hover {
-  background: #20334a;
-  color: #22c55e;
-}
-
-input,
-select {
-  background: #0b1728;
-  color: white;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 12px;
-  max-width: 100%;
-}
-
-footer {
-  background: #081321;
-  color: #94a3b8;
-  border-top: 1px solid #263a50;
-}
-
-@media (max-width: 600px) {
-  header {
-    padding: 14px 10px;
-  }
-
-  .logo {
-    font-size: 21px;
-  }
-
-  nav a {
-    margin: 3px;
-    font-size: 13px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-}
-  /* PLACE2WIN PROFESSIONAL DESIGN UPGRADE */
-
-body {
-  background: #07111f;
-  color: #f1f5f9;
-  font-family: Arial, sans-serif;
-}
-
-header {
-  background: linear-gradient(135deg, #07111f, #12243b);
-  border-bottom: 2px solid #22c55e;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
-}
-
-.logo {
-  color: #22c55e;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-}
-
-.logo span {
-  color: #ffffff;
-}
-
-nav a {
-  color: #e2e8f0;
-  text-decoration: none;
-  border-radius: 8px;
-  padding: 9px 12px;
-  transition: background 0.2s ease;
-}
-
-nav a:hover {
-  background: #203247;
-  color: #22c55e;
-}
-
-button {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #06120b;
-  border: none;
-  border-radius: 9px;
-  padding: 12px 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-button:hover {
-  transform: translateY(-1px);
-}
-
-.card {
-  background: linear-gradient(145deg, #142238, #0c1727);
-  border: 1px solid #263a50;
-  border-radius: 16px;
-  padding: 20px;
-  margin: 16px 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-}
-
-.card h3 {
-  color: #f8fafc;
-  font-size: 18px;
-  line-height: 1.5;
-}
-
-.card p {
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.prediction {
-  background: #102b25;
-  border: 1px solid #23664d;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 12px;
-  color: #e2f7eb;
+a {
+    transition: color 0.2s;
 }
 
 input,
-select {
-  background: #0b1728;
-  color: #f8fafc;
-  border: 1px solid #334155;
-  border-radius: 9px;
-  padding: 12px;
-  max-width: 100%;
+select,
+textarea {
+    background: #091629;
+    color: var(--text);
+    border: 1px solid #344761;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 42px;
+    max-width: 100%;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #8496ad;
 }
 
 input:focus,
-select:focus {
-  outline: 2px solid #22c55e;
-  border-color: #22c55e;
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--green);
+    outline-offset: 1px;
+}
+
+.fixture-filters {
+    display: grid;
+    grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(130px, 1fr));
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.fixture-filters input,
+.fixture-filters select {
+    width: 100%;
+}
+
+#liveFixturesList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#liveFixturesList > div {
+    margin: 0;
+    min-width: 0;
+}
+
+#liveFixturesList h3 {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+}
+
+#liveFixturesList p {
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+#liveFixturesList p:first-of-type {
+    color: var(--text);
+}
+
+#liveFixturesStatus {
+    color: var(--green);
+    font-weight: 700;
+}
+
+#matchesList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.notice {
+    color: var(--muted);
+    font-size: 14px;
 }
 
 footer {
-  background: #07111f;
-  color: #94a3b8;
-  border-top: 1px solid #263a50;
-  padding: 20px;
+    background: #050c16;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    padding: 30px 5%;
+    text-align: center;
+    margin-top: 50px;
 }
 
-@media (max-width: 600px) {
-  header {
-    padding: 14px 10px;
-    gap: 8px;
-  }
-
-  nav a {
-    margin: 3px;
-    font-size: 13px;
-    padding: 8px;
-  }
-
-  .card {
-    padding: 16px;
-    margin: 12px 0;
-  }
+img {
+    max-width: 100%;
+    height: auto;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+@media (max-width: 760px) {
+    header {
+        padding: 15px 4%;
+    }
+
+    nav {
+        gap: 12px;
+    }
+
+    .hero {
+        padding: 50px 18px;
+    }
+
+    section {
+        width: 94%;
+        margin: 24px auto;
+    }
+
+    .fixture-filters {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .fixture-filters input[type="text"] {
+        grid-column: 1 / -1;
+    }
+
+    #liveFixturesList,
+    #matchesList {
+        grid-template-columns: 1fr;
+    }
+
+    .card,
+    .match-card,
+    .prediction-card,
+    .plan-card,
+    #liveFixturesList > div,
+    #matchesList > div {
+        padding: 17px;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    nav {
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .fixture-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .fixture-filters input[type="text"] {
+        grid-column: auto;
+    }
+} 
 </style>
 </head>
 
