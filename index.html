@@ -820,7 +820,53 @@ competition.prepend(flag);
     const status = document.createElement("p");
     status.textContent =
         item.fixture?.status?.long || "Scheduled";
+// PLACE2WIN AUTOMATIC PREDICTIONS
+const predictionBox = document.createElement("div");
+predictionBox.className = "prediction";
+predictionBox.style.cssText =
+  "margin-top:12px;padding:12px;background:#202020;border-radius:8px;color:white;";
 
+const homeName = item.teams?.home?.name || "Home";
+const awayName = item.teams?.away?.name || "Away";
+
+// Stable fallback estimates, not statistical forecasts.
+// Replace with a statistics-based model when team data is available.
+const seedText = homeName + "|" + awayName + "|" +
+  (item.fixture?.date || "");
+let seed = 0;
+
+for (let i = 0; i < seedText.length; i++) {
+  seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
+}
+
+const homeStrength = 0.35 + ((seed % 30) / 100);
+const awayStrength = 0.25 + (((seed >>> 5) % 25) / 100);
+const drawStrength = 0.20 + (((seed >>> 10) % 15) / 100);
+
+let outcome = "Draw";
+if (homeStrength > awayStrength && homeStrength > drawStrength) {
+  outcome = homeName + " Win";
+} else if (awayStrength > homeStrength && awayStrength > drawStrength) {
+  outcome = awayName + " Win";
+}
+
+const heading = document.createElement("strong");
+heading.textContent = "🎯 PLACE2WIN PREDICTIONS";
+
+const result = document.createElement("p");
+result.textContent = "🏆 1X2: " + outcome;
+
+const goals = document.createElement("p");
+goals.textContent = "⚽ Over/Under 2.5: Not available";
+
+const btts = document.createElement("p");
+btts.textContent = "🔥 Both Teams to Score: Not available";
+
+const disclaimer = document.createElement("small");
+disclaimer.textContent =
+  "Experimental estimate only; not based on verified team statistics.";
+
+predictionBox.append(heading, result, goals, btts, disclaimer);
     card.append(title, competition, date, status);
     list.appendChild(card);
 });
