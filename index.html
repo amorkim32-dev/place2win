@@ -304,6 +304,85 @@ td {
         grid-column: auto;
     }
 } 
+/* PLACE2WIN PREMIUM HEADER */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 18px 6%;
+    background: rgba(8, 18, 15, 0.97);
+    border-bottom: 1px solid rgba(32, 216, 135, 0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(16px);
+}
+
+header h1,
+header .logo,
+.logo {
+    margin: 0;
+    color: #20d887;
+    font-size: 1.65rem;
+    font-weight: 900;
+    letter-spacing: -0.8px;
+    text-transform: uppercase;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+nav a {
+    display: inline-block;
+    padding: 10px 14px;
+    color: #d4e2da;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 650;
+    border-radius: 9px;
+    transition: all 0.25s ease;
+}
+
+nav a:hover,
+nav a:focus {
+    color: #20d887;
+    background: rgba(32, 216, 135, 0.10);
+}
+
+header button {
+    border-radius: 10px;
+    font-weight: 800;
+}
+
+@media (max-width: 650px) {
+    header {
+        padding: 14px 5%;
+        gap: 12px;
+    }
+
+    header h1,
+    header .logo,
+    .logo {
+        font-size: 1.4rem;
+    }
+
+    nav {
+        width: 100%;
+        gap: 5px;
+    }
+
+    nav a {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+}
 </style>
 </head>
 
