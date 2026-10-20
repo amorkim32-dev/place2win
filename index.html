@@ -122,11 +122,18 @@ section {
 h2 { color: #d4af37; }
 
 .card {
-  background: #1c1c1c;
-  border: 1px solid #38332a;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 15px 0;
+  background: linear-gradient(145deg, #14253b, #0b1728);
+  border: 1px solid #263c54;
+  border-radius: 16px;
+  padding: 22px;
+  margin: 18px 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: #24c46a;
+  transform: translateY(-2px);
 }
 
 input {
