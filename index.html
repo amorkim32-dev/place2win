@@ -2306,7 +2306,7 @@ async function loadMatches() {
     .order("kickoff_at", { ascending: true });
   if (aiError) {
     console.warn("AI prediction cache could not be loaded:", aiError);
-    window.place2winAiLoadError = true;
+    window.place2winAiLoadError = aiError.message || "Could not load saved AI predictions.";
     window.place2winAiPredictions = {};
     const history = document.getElementById("resultsHistoryList");
     if (history) history.replaceChildren(Object.assign(document.createElement("p"), {
@@ -2616,7 +2616,9 @@ async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, a
         }
         return renderMatchStatistics(container, payload, homeName, awayName);
     } catch (error) {
-        message.textContent = error.message || "Match statistics could not be loaded.";
+        message.textContent = error?.message === "Failed to fetch"
+            ? "Statistics service is unreachable. Deploy the fixture-statistics function in Supabase."
+            : (error.message || "Match statistics could not be loaded.");
         return false;
     }
 }
@@ -2745,7 +2747,9 @@ function createFixtureCard(item, tip, aiPrediction) {
         const canForecast = shortStatus === "NS" && fixtureId;
         pending.textContent = canForecast
             ? (window.place2winAiLoadError
-                ? "AI predictions are unavailable because the Supabase predictions table is not ready."
+                ? (String(window.place2winAiLoadError).includes("competition does not exist")
+                    ? "AI picks need a Supabase database update: the competition column is missing."
+                    : "AI predictions could not load from Supabase. Check the AI predictions table and access policies.")
                 : "AI forecast and probabilities are being prepared for this match.")
             : "A pre-match AI forecast is not available for this match.";
         aiState.append(aiHeading, pending);
@@ -2795,7 +2799,9 @@ function createFixtureCard(item, tip, aiPrediction) {
         preview.append(label, document.createTextNode(` · ${aiPrediction.prediction}`));
     } else {
         preview.textContent = window.place2winAiLoadError
-            ? "AI pick unavailable · Supabase prediction setup needed"
+            ? (String(window.place2winAiLoadError).includes("competition does not exist")
+                ? "AI pick unavailable · database update needed"
+                : "AI pick unavailable · Supabase connection issue")
             : "AI pick is being prepared";
     }
     card.append(preview, details);
