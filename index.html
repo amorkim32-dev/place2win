@@ -1668,6 +1668,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .fixture-final-scores span { flex-direction: column; justify-content: center; gap: 2px; padding: 4px 5px; text-align: center; }
 .fixture-final-scores strong { font-size: 6px; line-height: 1; }
 .fixture-final-scores b { font-size: 8px; line-height: 1.1; }
+.fixture-pick-preview { margin: 7px 0 0; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--match-accent) 34%, transparent); border-radius: 5px; background: rgba(8,12,24,.34); color: #e7edff; font-size: 9px; line-height: 1.4; }
+.fixture-pick-preview strong { color: var(--match-accent); font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
+.fixture-pick-preview.is-locked { color: #dacbff; }
+.fixture-pick-preview a { color: #c0b4ff; font-weight: 800; text-decoration: underline; }
+.vip-access-state { margin: 8px 0; padding: 8px 10px; border: 1px solid #364263; border-radius: 6px; background: #121a2d; color: #b7c2da; font-size: 10px; }
+.vip-access-state.is-active { border-color: #28655f; color: #8af1df; }
+.fixture-vip-lock { display: inline-flex; margin-top: 7px; padding: 6px 9px; border: 1px solid #6858a8; border-radius: 5px; background: #292448; color: #e4dcff; font-size: 9px; font-weight: 800; }
 @media (max-width: 650px) {
     .results-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
     header { flex-wrap: wrap; }
@@ -1885,6 +1892,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 </button>
 
 <p id="paymentStatus" class="notice" aria-live="polite"></p>
+<p class="notice">Sign in to your Place2Win account before submitting. VIP access opens after your payment is approved.</p>
   </div>
 </section>
 
@@ -1922,6 +1930,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   <div class="card" id="accountArea">
     <h3>Welcome!</h3>
     <p id="userEmail"></p>
+    <p id="vipAccessStatus" class="vip-access-state" aria-live="polite">VIP access is locked for this account.</p>
+    <button type="button" onclick="refreshPlace2WinVipAccess()">Refresh VIP access</button>
     <p>Your account is connected.</p>
     <p class="notice">
       VIP membership is not active until a secure payment system
@@ -1982,6 +1992,70 @@ function showAccount(user) {
   document.getElementById("userEmail").textContent =
     user ? "Logged in as: " + user.email : "";
 }
+
+const vipPlanDurations = { daily: 1, weekly: 7, monthly: 30 };
+window.place2winVipActive = false;
+
+window.refreshPlace2WinVipAccess = async function (knownUser = null) {
+  const state = document.getElementById("vipAccessStatus");
+  const client = window.supabaseClient;
+  window.place2winVipActive = false;
+  if (state) {
+    state.classList.remove("is-active");
+    state.textContent = "VIP predictions are locked. Sign in and subscribe to unlock them.";
+  }
+  if (!client) return false;
+
+  try {
+    let user = knownUser;
+    if (!user) {
+      const { data, error } = await client.auth.getUser();
+      if (error) throw error;
+      user = data.user;
+    }
+    if (!user) return false;
+    const { data: payments, error } = await client
+      .from("vip_payments")
+      .select("plan, submitted_at, approved_at")
+      .eq("user_id", user.id)
+      .eq("status", "approved");
+    if (error) throw error;
+
+    const now = Date.now();
+    const activePayment = (payments || []).map((payment) => {
+      const days = vipPlanDurations[payment.plan];
+      const start = Date.parse(payment.approved_at || payment.submitted_at || "");
+      return days && Number.isFinite(start) && start + days * 86_400_000 > now
+        ? { ...payment, expiresAt: start + days * 86_400_000 }
+        : null;
+    }).filter(Boolean).sort((a, b) => b.expiresAt - a.expiresAt)[0];
+
+    let isAdmin = false;
+    if (!activePayment) {
+      const { data: adminRow, error: adminError } = await client
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!adminError) isAdmin = Boolean(adminRow);
+    }
+    window.place2winVipActive = Boolean(activePayment || isAdmin);
+    if (state && activePayment) {
+      state.classList.add("is-active");
+      state.textContent = `VIP access active until ${new Date(activePayment.expiresAt).toLocaleString()}.`;
+    } else if (state && isAdmin) {
+      state.classList.add("is-active");
+      state.textContent = "VIP preview enabled for administrator account.";
+    } else if (state) {
+      state.textContent = "VIP predictions are locked until a submitted payment is approved.";
+    }
+    return window.place2winVipActive;
+  } catch (error) {
+    console.warn("VIP access could not be verified:", error);
+    if (state) state.textContent = "VIP access could not be verified. Predictions stay locked until the account service is available.";
+    return false;
+  }
+};
 
 function outcomeLabel(outcome, homeTeam, awayTeam) {
   if (outcome === "home") return `${homeTeam} win`;
@@ -2114,6 +2188,7 @@ window.signIn = async function () {
   }
 
   showAccount(data.user);
+  await window.refreshPlace2WinVipAccess(data.user);
   showStatus("Login successful!");
   window.dispatchEvent(new Event("place2win-auth-changed"));
 };
@@ -2154,11 +2229,13 @@ window.dispatchEvent(new Event("supabase-ready"));
     if (error) throw error;
 
     showAccount(data.session?.user || null);
+    await window.refreshPlace2WinVipAccess(data.session?.user || null);
     showStatus("Account service connected.");
     await loadMatches();
 
     supabase.auth.onAuthStateChange((_event, session) => {
       showAccount(session?.user || null);
+      window.refreshPlace2WinVipAccess(session?.user || null).then(() => loadMatches());
     });
   } catch (error) {
     showAccount(null);
@@ -2185,11 +2262,12 @@ async function loadMatches() {
     window.dispatchEvent(new CustomEvent("place2win-tips-loaded", { detail: [] }));
   }
 
-  // Never request VIP prediction text from the public page. Database access
-  // policies must also restrict direct reads; frontend filtering is not authorization.
-  const { data: vipTips, error: vipError } = await supabase
-    .from("matches")
-    .select("id, home_team, away_team, competition, odds, is_vip, confidence, is_bet_of_day")
+  // Visitors get a preview view that never contains VIP prediction text.
+  // Active members read the protected matches table under its RLS policy.
+  const vipQuery = window.place2winVipActive
+    ? supabase.from("matches").select("id, home_team, away_team, competition, prediction, odds, is_vip, confidence, is_bet_of_day")
+    : supabase.from("vip_match_previews").select("id, home_team, away_team, competition, odds, is_vip, confidence, is_bet_of_day");
+  const { data: vipTips, error: vipError } = await vipQuery
     .eq("is_vip", true)
     .order("id", { ascending: false });
 
@@ -2203,7 +2281,7 @@ async function loadMatches() {
 
   const { data: aiRows, error: aiError } = await supabase
     .from("ai_match_predictions")
-    .select("fixture_id, home_team, away_team, competition, kickoff_at, prediction, pick_outcome, confidence, rationale, admin_overridden, actual_outcome, result_home_score, result_away_score, result_halftime_home_score, result_halftime_away_score, result_source, result_recorded_at");
+    .select("fixture_id, home_team, away_team, competition, kickoff_at, prediction, pick_outcome, confidence, rationale, probabilities, admin_overridden, actual_outcome, result_home_score, result_away_score, result_halftime_home_score, result_halftime_away_score, result_source, result_recorded_at");
   if (aiError) {
     console.warn("AI prediction cache could not be loaded:", aiError);
     const history = document.getElementById("resultsHistoryList");
@@ -2215,10 +2293,11 @@ async function loadMatches() {
     }
     return;
   }
-  window.place2winAiPredictions = {
-    ...(window.place2winAiPredictions || {}),
-    ...Object.fromEntries((aiRows || []).map((row) => [String(row.fixture_id), row]))
-  };
+  // Replace the cache on every auth/entitlement refresh so VIP forecasts
+  // previously loaded in this tab are discarded immediately after sign-out.
+  window.place2winAiPredictions = Object.fromEntries(
+    (aiRows || []).map((row) => [String(row.fixture_id), row])
+  );
   renderPredictionHistory(aiRows || []);
   window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: window.place2winAiPredictions }));
 }
@@ -2269,44 +2348,63 @@ function renderBetOfDay(tip = window.place2winBetOfDay) {
     metrics.hidden = visibleMetrics.length === 0;
     odds.hidden = !visibleMetrics.includes(odds);
     confidence.hidden = !visibleMetrics.includes(confidence);
-    lockText.textContent = tip.is_vip ? "The prediction is reserved for VIP members." : "VIP selection";
+    if (tip.is_vip && !window.place2winVipActive) {
+        lockText.textContent = "🔒 The prediction is reserved for VIP members. Subscribe to unlock this pick.";
+        const subscribe = document.createElement("a");
+        subscribe.href = "#plans";
+        subscribe.textContent = " View VIP plans";
+        lockText.appendChild(subscribe);
+    } else {
+        lockText.textContent = tip.prediction || "VIP selection";
+    }
 }
 
 window.addEventListener("place2win-bet-of-day-loaded", (event) => renderBetOfDay(event.detail));
 renderBetOfDay();
 
-function createTipDetails(tip) {
+function createTipDetails(tip, vipActive = window.place2winVipActive === true) {
     const box = document.createElement("div");
     box.className = "fixture-tip-detail";
     const label = document.createElement("h4");
     label.textContent = tip.is_ai ? "AI match prediction" : (tip.is_vip ? "VIP pick" : "Free pick");
     const text = document.createElement("strong");
-    text.textContent = tip.is_vip
-        ? "🔒 Subscribe to VIP to unlock this pick."
+    const locked = Boolean(tip.is_vip && !vipActive);
+    text.textContent = locked
+        ? "🔒 VIP prediction locked. Subscribe and wait for payment approval to unlock this pick."
         : `🎯 ${tip.prediction || "Prediction not available."}`;
     box.append(label, text);
 
-    const metadata = [];
-    if (tip.odds != null) metadata.push(`Odds ${tip.odds}`);
-    if (tip.confidence != null) metadata.push(`${tip.confidence}% confidence`);
-    if (tip.is_ai && tip.pick_outcome) {
-        const selectedOutcome = tip.pick_outcome === "home" ? `${tip.home_team} win`
-            : tip.pick_outcome === "away" ? `${tip.away_team} win` : "Draw";
-        metadata.push(`1X2 pick: ${selectedOutcome}`);
+    if (locked) {
+        const subscribe = document.createElement("a");
+        subscribe.className = "fixture-vip-lock";
+        subscribe.href = "#plans";
+        subscribe.textContent = "View VIP plans";
+        box.appendChild(subscribe);
     }
-    if (tip.is_ai && tip.probabilities) {
-        const p = tip.probabilities;
-        metadata.push(`1/X/2 ${Math.round(Number(p.home) || 0)}%/${Math.round(Number(p.draw) || 0)}%/${Math.round(Number(p.away) || 0)}%`);
-    }
-    if (metadata.length) {
-        const details = document.createElement("p");
-        details.textContent = metadata.join(" · ");
-        box.appendChild(details);
-    }
-    if (tip.is_ai && tip.rationale) {
-        const rationale = document.createElement("p");
-        rationale.textContent = tip.rationale;
-        box.appendChild(rationale);
+
+    if (!locked) {
+        const metadata = [];
+        if (tip.odds != null) metadata.push(`Odds ${tip.odds}`);
+        if (tip.confidence != null) metadata.push(`${tip.confidence}% confidence`);
+        if (tip.is_ai && tip.pick_outcome) {
+            const selectedOutcome = tip.pick_outcome === "home" ? `${tip.home_team} win`
+                : tip.pick_outcome === "away" ? `${tip.away_team} win` : "Draw";
+            metadata.push(`1X2 pick: ${selectedOutcome}`);
+        }
+        if (tip.is_ai && tip.probabilities) {
+            const p = tip.probabilities;
+            metadata.push(`1/X/2 ${Math.round(Number(p.home) || 0)}%/${Math.round(Number(p.draw) || 0)}%/${Math.round(Number(p.away) || 0)}%`);
+        }
+        if (metadata.length) {
+            const details = document.createElement("p");
+            details.textContent = metadata.join(" · ");
+            box.appendChild(details);
+        }
+        if (tip.is_ai && tip.rationale) {
+            const rationale = document.createElement("p");
+            rationale.textContent = tip.rationale;
+            box.appendChild(rationale);
+        }
     }
     return box;
 }
@@ -2523,10 +2621,14 @@ function createFixtureCard(item, tip, aiPrediction) {
     details.className = "fixture-detail";
     details.id = detailId;
     details.hidden = true;
-    if (tip) details.appendChild(createTipDetails(tip));
-    if (aiPrediction) {
-        details.appendChild(createTipDetails({ ...aiPrediction, is_ai: true }));
+    const vipLocked = Boolean((tip?.is_vip || aiPrediction?.is_vip) && !window.place2winVipActive);
+    if (vipLocked) {
+        details.appendChild(createTipDetails({ ...(tip || aiPrediction), is_vip: true }, false));
     } else {
+        if (tip) details.appendChild(createTipDetails(tip));
+        if (aiPrediction) details.appendChild(createTipDetails({ ...aiPrediction, is_ai: true }));
+    }
+    if (!vipLocked && !aiPrediction) {
         const aiState = document.createElement("div");
         aiState.className = "ai-prediction-state";
         const aiHeading = document.createElement("h4");
@@ -2569,7 +2671,23 @@ function createFixtureCard(item, tip, aiPrediction) {
             stats.appendChild(message);
         }
     });
-    card.append(trigger, details);
+    card.appendChild(trigger);
+    const preview = document.createElement("div");
+    preview.className = `fixture-pick-preview${vipLocked ? " is-locked" : ""}`;
+    if (vipLocked) {
+        preview.innerHTML = '<strong>VIP PICK</strong> · 🔒 Members only · <a href="#plans">View plans</a>';
+    } else if (tip?.prediction) {
+        const label = document.createElement("strong");
+        label.textContent = tip.is_vip ? "VIP PICK" : "FREE PICK";
+        preview.append(label, document.createTextNode(` · ${tip.prediction}`));
+    } else if (aiPrediction?.prediction) {
+        const label = document.createElement("strong");
+        label.textContent = "AI PICK";
+        preview.append(label, document.createTextNode(` · ${aiPrediction.prediction}`));
+    } else {
+        preview.textContent = "AI pick is being prepared";
+    }
+    card.append(preview, details);
     return card;
 }
 
@@ -2627,7 +2745,18 @@ function createTipOnlyCard(tip) {
         trigger.setAttribute("aria-expanded", String(!expanded));
         details.hidden = expanded;
     });
-    card.append(trigger, details);
+    card.appendChild(trigger);
+    const preview = document.createElement("div");
+    const locked = Boolean(tip.is_vip && !window.place2winVipActive);
+    preview.className = `fixture-pick-preview${locked ? " is-locked" : ""}`;
+    if (locked) {
+        preview.innerHTML = '<strong>VIP PICK</strong> · 🔒 Members only · <a href="#plans">View plans</a>';
+    } else {
+        const label = document.createElement("strong");
+        label.textContent = tip.is_vip ? "VIP PICK" : "FREE PICK";
+        preview.append(label, document.createTextNode(` · ${tip.prediction || "Prediction not available."}`));
+    }
+    card.append(preview, details);
     return card;
 }
 
@@ -2966,11 +3095,15 @@ async function generateAiPredictions(fixtures) {
 
     const status = document.getElementById("liveFixturesStatus");
     try {
+        const { data: sessionData } = await window.supabaseClient?.auth.getSession() || { data: null };
         const response = await fetch(`${config.supabaseUrl}/functions/v1/ai-match-predictions`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 apikey: config.publishableKey,
+                ...(sessionData?.session?.access_token
+                    ? { Authorization: `Bearer ${sessionData.session.access_token}` }
+                    : {}),
             },
             body: JSON.stringify({ fixtures: candidates.map((item) => ({ id: item.fixture.id })) }),
         });
@@ -3511,6 +3644,13 @@ window.submitVipPayment = async function () {
         return;
     }
 
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    if (authError || !authData.user) {
+        status.textContent = "Create an account or log in first so approved VIP access can be linked to you.";
+        document.getElementById("account")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+    }
+
     if (!amounts[plan]) {
         status.textContent = "Please select a valid VIP plan.";
         return;
@@ -3534,8 +3674,8 @@ window.submitVipPayment = async function () {
         const { error } = await window.supabaseClient
             .from("vip_payments")
             .insert({
-                user_id: null,
-                email: null,
+                user_id: authData.user.id,
+                email: authData.user.email,
                 phone_number: phone,
                 plan: plan,
                 amount: amounts[plan],
