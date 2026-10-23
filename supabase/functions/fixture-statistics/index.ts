@@ -52,6 +52,8 @@ Deno.serve(async (request) => {
   }
   const validTeamId = (id: string) => /^\d{1,12}$/.test(id) && Number(id) > 0;
   const includeHistory = validTeamId(homeTeamId) && validTeamId(awayTeamId);
+  const fixtureStatus = params.get("status") ?? "";
+  const includeEvents = ["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "FT", "AET", "PEN"].includes(fixtureStatus);
 
   const address = request.headers.get("cf-connecting-ip") ??
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? origin;
@@ -66,7 +68,7 @@ Deno.serve(async (request) => {
     limit.count += 1;
   }
 
-  const cacheKey = `${fixtureId}:${includeHistory ? `${homeTeamId}-${awayTeamId}` : "no-history"}`;
+  const cacheKey = `${fixtureId}:${includeHistory ? `${homeTeamId}-${awayTeamId}` : "no-history"}:${includeEvents ? "events" : "no-events"}`;
   const cached = responseCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     return jsonResponse(cached.payload, 200, origin);
@@ -95,8 +97,9 @@ Deno.serve(async (request) => {
         getProviderData(`fixtures?team=${awayTeamId}&last=5&status=FT-AET-PEN`),
       ]
       : [];
-    const [statsResult, ...historyResults] = await Promise.allSettled([
+    const [statsResult, eventsResult, ...historyResults] = await Promise.allSettled([
       getProviderData(`fixtures/statistics?fixture=${fixtureId}`),
+      includeEvents ? getProviderData(`fixtures/events?fixture=${fixtureId}`) : Promise.resolve([]),
       ...historyRequests,
     ]);
     const historyValue = (index: number) => {
@@ -105,6 +108,7 @@ Deno.serve(async (request) => {
     };
     const payload = {
       response: statsResult.status === "fulfilled" ? statsResult.value : [],
+      events: eventsResult.status === "fulfilled" ? eventsResult.value : [],
       headToHead: includeHistory ? historyValue(0) : [],
       lastFive: includeHistory ? { home: historyValue(1), away: historyValue(2) } : { home: [], away: [] },
     };
