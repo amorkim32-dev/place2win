@@ -2267,11 +2267,23 @@ async function loadMatches() {
   const vipQuery = window.place2winVipActive
     ? supabase.from("matches").select("id, home_team, away_team, competition, prediction, odds, is_vip, confidence, is_bet_of_day")
     : supabase.from("vip_match_previews").select("id, home_team, away_team, competition, odds, is_vip, confidence, is_bet_of_day");
-  const { data: vipTips, error: vipError } = await vipQuery
+  const { data: queriedVipTips, error: vipError } = await vipQuery
     .eq("is_vip", true)
     .order("id", { ascending: false });
 
-  if (vipError) console.warn("VIP preview rows could not be loaded:", vipError);
+  let vipTips = queriedVipTips;
+  if (vipError) {
+    console.warn("VIP preview rows could not be loaded:", vipError);
+    // Older Supabase projects may not have the preview view yet. Request only
+    // non-sensitive metadata as a fail-closed fallback so cards still lock.
+    if (!window.place2winVipActive) {
+      const { data: metadataOnly } = await supabase.from("matches")
+        .select("id, home_team, away_team, competition, odds, is_vip, confidence, is_bet_of_day")
+        .eq("is_vip", true)
+        .order("id", { ascending: false });
+      vipTips = metadataOnly;
+    }
+  }
   window.place2winBetOfDay = (vipTips || []).find((tip) => tip.is_bet_of_day) || null;
   window.dispatchEvent(new CustomEvent("place2win-bet-of-day-loaded", { detail: window.place2winBetOfDay }));
   const data = [...(freeTips || []), ...(vipTips || [])]
@@ -2345,10 +2357,11 @@ function renderBetOfDay(tip = window.place2winBetOfDay) {
         confidence.textContent = `CONFIDENCE  ${tip.confidence}%`;
         visibleMetrics.push(confidence);
     }
-    metrics.hidden = visibleMetrics.length === 0;
+    const vipLocked = Boolean(tip.is_vip && !window.place2winVipActive);
+    metrics.hidden = visibleMetrics.length === 0 || vipLocked;
     odds.hidden = !visibleMetrics.includes(odds);
     confidence.hidden = !visibleMetrics.includes(confidence);
-    if (tip.is_vip && !window.place2winVipActive) {
+    if (vipLocked) {
         lockText.textContent = "🔒 The prediction is reserved for VIP members. Subscribe to unlock this pick.";
         const subscribe = document.createElement("a");
         subscribe.href = "#plans";
