@@ -1,6 +1,54 @@
 -- Protect VIP picks at the database boundary and expose only non-sensitive
 -- fixture metadata to visitors without an active, approved subscription.
 
+-- Ensure the predictions table and columns exist even if an earlier setup step
+-- was skipped or partially applied.
+create table if not exists public.ai_match_predictions (
+  fixture_id bigint primary key,
+  home_team text not null,
+  away_team text not null,
+  competition text not null,
+  kickoff_at timestamptz not null,
+  prediction text not null,
+  confidence smallint not null default 50 check (confidence between 1 and 100),
+  rationale text not null default '',
+  probabilities jsonb not null default '{}'::jsonb,
+  model text not null default 'gpt-4o-mini',
+  admin_overridden boolean not null default false,
+  generated_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  pick_outcome text,
+  actual_outcome text,
+  result_home_score smallint,
+  result_away_score smallint,
+  result_halftime_home_score smallint,
+  result_halftime_away_score smallint,
+  result_source text,
+  result_recorded_at timestamptz
+);
+
+alter table public.ai_match_predictions
+  add column if not exists home_team text not null default 'Home team',
+  add column if not exists away_team text not null default 'Away team',
+  add column if not exists competition text not null default 'Football',
+  add column if not exists kickoff_at timestamptz not null default now(),
+  add column if not exists prediction text not null default 'Prediction pending',
+  add column if not exists confidence smallint not null default 50,
+  add column if not exists rationale text not null default '',
+  add column if not exists probabilities jsonb not null default '{}'::jsonb,
+  add column if not exists model text not null default 'gpt-4o-mini',
+  add column if not exists admin_overridden boolean not null default false,
+  add column if not exists generated_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now(),
+  add column if not exists pick_outcome text,
+  add column if not exists actual_outcome text,
+  add column if not exists result_home_score smallint,
+  add column if not exists result_away_score smallint,
+  add column if not exists result_halftime_home_score smallint,
+  add column if not exists result_halftime_away_score smallint,
+  add column if not exists result_source text,
+  add column if not exists result_recorded_at timestamptz;
+
 alter table public.vip_payments
   add column if not exists approved_at timestamptz;
 
