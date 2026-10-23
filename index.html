@@ -646,6 +646,13 @@ input, select, textarea {
 .stats-bar span:first-child { background: var(--green); }
 .stats-bar span:last-child { margin-left: auto; background: #7c93a5; }
 .stats-message { margin: 0; color: #93aab3; font-size: 10px; }
+.match-history { display: grid; gap: 6px; margin-top: 10px; }
+.match-history-list { display: grid; gap: 5px; }
+.history-result { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 10px; padding: 7px 9px; border: 1px solid rgba(148,172,202,.13); border-radius: 7px; background: rgba(255,255,255,.025); color: #cbd9dc; font-size: 10px; }
+.history-result strong { color: #e9f0f1; font-size: 10px; }
+.history-result time, .history-result small { color: #8fa8b2; font-size: 9px; }
+.history-result .history-score { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #9ef1d3; font-weight: 800; white-space: nowrap; }
+.history-result .history-outcome { color: #9ef1d3; font-weight: 700; }
 .fixture-tip-link { font-size: 10px; }
 #plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 #plans > h2, #paymentMessage { grid-column: 1 / -1; }
@@ -2450,6 +2457,61 @@ function createTipDetails(tip, vipActive = window.place2winVipActive === true) {
     return box;
 }
 
+function renderMatchHistory(container, payload, homeName, awayName) {
+    const makeSection = (heading, fixtures, perspective = null) => {
+        const section = document.createElement("section");
+        section.className = "match-history";
+        const title = document.createElement("h4");
+        title.textContent = heading;
+        section.appendChild(title);
+        const list = document.createElement("div");
+        list.className = "match-history-list";
+        const settled = (Array.isArray(fixtures) ? fixtures : []).filter((match) => {
+            const status = match?.fixture?.status?.short;
+            return ["FT", "AET", "PEN"].includes(status) && match.goals?.home != null && match.goals?.away != null;
+        }).slice(0, 5);
+        if (!settled.length) {
+            const empty = document.createElement("p");
+            empty.className = "stats-message";
+            empty.textContent = "No previous results available.";
+            list.appendChild(empty);
+        }
+        for (const match of settled) {
+            const row = document.createElement("div");
+            row.className = "history-result";
+            const sides = document.createElement("strong");
+            const matchHome = match.teams?.home?.name || "Home";
+            const matchAway = match.teams?.away?.name || "Away";
+            sides.textContent = `${matchHome} · ${matchAway}`;
+            const score = document.createElement("span");
+            score.className = "history-score";
+            score.textContent = `${match.goals.home} – ${match.goals.away}`;
+            const date = document.createElement("time");
+            const parsedDate = match.fixture?.date ? new Date(match.fixture.date) : null;
+            date.textContent = parsedDate && !Number.isNaN(parsedDate.getTime())
+                ? new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(parsedDate)
+                : "Date unavailable";
+            row.append(sides, score, date);
+            if (perspective) {
+                const perspectiveIsHome = match.teams?.home?.name === perspective;
+                const forGoals = perspectiveIsHome ? Number(match.goals.home) : Number(match.goals.away);
+                const againstGoals = perspectiveIsHome ? Number(match.goals.away) : Number(match.goals.home);
+                const outcome = document.createElement("small");
+                outcome.className = "history-outcome";
+                outcome.textContent = forGoals > againstGoals ? "W" : forGoals < againstGoals ? "L" : "D";
+                row.appendChild(outcome);
+            }
+            list.appendChild(row);
+        }
+        section.appendChild(list);
+        container.appendChild(section);
+    };
+
+    makeSection("Last 5 meetings", payload?.headToHead, null);
+    makeSection(`${homeName} · last 5`, payload?.lastFive?.home, homeName);
+    makeSection(`${awayName} · last 5`, payload?.lastFive?.away, awayName);
+}
+
 function renderMatchStatistics(container, payload, homeName, awayName) {
     container.replaceChildren();
     const teams = Array.isArray(payload?.response) ? payload.response : [];
@@ -2458,7 +2520,8 @@ function renderMatchStatistics(container, payload, homeName, awayName) {
         message.className = "stats-message";
         message.textContent = "No real match statistics have been reported by the provider yet. Reopen this match later to refresh.";
         container.appendChild(message);
-        return false;
+        renderMatchHistory(container, payload, homeName, awayName);
+        return true;
     }
 
     const findTeam = (name, fallback) => teams.find((team) =>
@@ -2513,10 +2576,11 @@ function renderMatchStatistics(container, payload, homeName, awayName) {
         message.textContent = "The provider has not reported match statistics for this match yet.";
         container.appendChild(message);
     }
-    return rows > 0;
+    renderMatchHistory(container, payload, homeName, awayName);
+    return true;
 }
 
-async function fetchMatchStatistics(fixtureId, homeName, awayName, container) {
+async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, awayTeamId, container) {
     const message = document.createElement("p");
     message.className = "stats-message";
     message.textContent = "Loading match statistics…";
@@ -2531,6 +2595,8 @@ async function fetchMatchStatistics(fixtureId, homeName, awayName, container) {
             if (!config?.supabaseUrl) throw new Error("Match statistics are not connected.");
             const url = new URL("/functions/v1/fixture-statistics", config.supabaseUrl);
             url.searchParams.set("fixture", fixtureId);
+            if (homeTeamId) url.searchParams.set("homeTeam", homeTeamId);
+            if (awayTeamId) url.searchParams.set("awayTeam", awayTeamId);
             const response = await fetch(url, {
                 headers: { apikey: config.publishableKey, Accept: "application/json" }
             });
@@ -2542,7 +2608,7 @@ async function fetchMatchStatistics(fixtureId, homeName, awayName, container) {
             if (!response.ok) throw new Error(payload.error || "Match statistics could not be loaded.");
             const hasProviderStats = Array.isArray(payload?.response) && payload.response.some((team) =>
                 Array.isArray(team.statistics) && team.statistics.some((stat) => stat.value != null)
-            );
+            ) || Array.isArray(payload?.headToHead) || Array.isArray(payload?.lastFive?.home) || Array.isArray(payload?.lastFive?.away);
             matchStatsCache.set(cacheKey, {
                 payload,
                 expiresAt: Date.now() + (hasProviderStats ? 30_000 : 15_000)
@@ -2704,7 +2770,7 @@ function createFixtureCard(item, tip, aiPrediction) {
         details.hidden = expanded;
         if (!expanded && fixtureId && !details.dataset.statsLoaded) {
             details.dataset.statsLoaded = "true";
-            fetchMatchStatistics(fixtureId, homeName, awayName, stats).then((loaded) => {
+            fetchMatchStatistics(fixtureId, homeName, awayName, item.teams?.home?.id, item.teams?.away?.id, stats).then((loaded) => {
                 if (!loaded) delete details.dataset.statsLoaded;
             });
         } else if (!expanded && !fixtureId && !stats.hasChildNodes()) {
