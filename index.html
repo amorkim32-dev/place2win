@@ -2299,15 +2299,17 @@ async function loadMatches() {
     .order("kickoff_at", { ascending: true });
   if (aiError) {
     console.warn("AI prediction cache could not be loaded:", aiError);
+    window.place2winAiLoadError = true;
     window.place2winAiPredictions = {};
     const history = document.getElementById("resultsHistoryList");
     if (history) history.replaceChildren(Object.assign(document.createElement("p"), {
       className: "stats-message",
-      textContent: "AI predictions could not be loaded. Check the AI predictions table migration and Supabase access policies."
+      textContent: `AI predictions could not load from Supabase: ${aiError.message}`
     }));
     window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: {} }));
     return;
   }
+  window.place2winAiLoadError = false;
   // Replace the cache on every auth/entitlement refresh so VIP forecasts
   // previously loaded in this tab are discarded immediately after sign-out.
   window.place2winAiPredictions = Object.fromEntries(
@@ -2676,7 +2678,9 @@ function createFixtureCard(item, tip, aiPrediction) {
         pending.className = "stats-message ai-prediction-pending";
         const canForecast = shortStatus === "NS" && fixtureId;
         pending.textContent = canForecast
-            ? "AI forecast and probabilities are being prepared for this match."
+            ? (window.place2winAiLoadError
+                ? "AI predictions are unavailable because the Supabase predictions table is not ready."
+                : "AI forecast and probabilities are being prepared for this match.")
             : "A pre-match AI forecast is not available for this match.";
         aiState.append(aiHeading, pending);
         if (canForecast) {
@@ -2724,7 +2728,9 @@ function createFixtureCard(item, tip, aiPrediction) {
         label.textContent = "AI PICK";
         preview.append(label, document.createTextNode(` · ${aiPrediction.prediction}`));
     } else {
-        preview.textContent = "AI pick is being prepared";
+        preview.textContent = window.place2winAiLoadError
+            ? "AI pick unavailable · Supabase prediction setup needed"
+            : "AI pick is being prepared";
     }
     card.append(preview, details);
     return card;
