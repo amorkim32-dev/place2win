@@ -1688,6 +1688,45 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     header nav { justify-content: flex-end; gap: 2px; }
     .admin-nav-button { padding: 5px 8px; font-size: 8px; }
 }
+/* Live clock and a refined broadcast-style premium theme */
+.fixture-status.is-live { display:inline-flex; align-items:center; gap:5px; border-color:#4c783b; background:#15251c; color:#bcf079; font-variant-numeric:tabular-nums; letter-spacing:.025em; }
+.fixture-status.is-live:not(.is-break):not(.is-final)::before { content:''; width:5px; height:5px; border-radius:50%; background:#a8f05d; box-shadow:0 0 0 3px rgba(168,240,93,.13); animation:live-pulse 1.6s ease-in-out infinite; }
+.fixture-status.is-break { color:#f3cf78; border-color:#67552c; background:#282216; }
+@keyframes live-pulse { 50% { opacity:.45; box-shadow:0 0 0 5px rgba(168,240,93,.04); } }
+:root { --dashboard-bg:#080d13; --dashboard-panel:#101923; --dashboard-border:#273540; --dashboard-muted:#9ba9b2; --dashboard-text:#f0f5f2; --dashboard-accent:#c5f36a; --dashboard-orange:#e7a954; --text:#f0f5f2; --muted:#9ba9b2; --border:#273540; --green:#c5f36a; }
+body { background:radial-gradient(ellipse at 50% -20%,rgba(90,126,67,.17),transparent 48rem),#080d13; color:#f0f5f2; }
+header { background:rgba(8,13,19,.94); border-bottom:1px solid #2c3b43; box-shadow:0 12px 32px rgba(0,0,0,.25); }
+header .logo span { color:#c5f36a; }
+.hero { border:1px solid #293942; border-radius:12px; background:radial-gradient(ellipse at 92% 12%,rgba(197,243,106,.12),transparent 30%),linear-gradient(115deg,#101b21,#111923 64%,#1b2118); box-shadow:0 20px 55px rgba(0,0,0,.2); }
+.hero-live-indicator { border-color:#38513a; background:#142019; color:#cbd8c7; }
+.hero-live-indicator span { background:#c5f36a; box-shadow:0 0 12px rgba(197,243,106,.65); }
+.hero-live-indicator strong { color:#c5f36a; }
+.dashboard-stat, #matchday > .bet-day-spotlight, #liveFixturesList, #plans > .card:not(#paymentMessage), #paymentMessage, #account > .card { border-color:#293942; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,.15); }
+.dashboard-stat { background:linear-gradient(145deg,#131f27,#10171e); }
+#liveFixturesList { padding:12px; gap:10px; background:rgba(11,17,23,.72); }
+#liveFixturesList > .fixture-card { padding:13px; border-radius:9px; border-left-width:3px; background:linear-gradient(145deg,color-mix(in srgb,var(--match-bg) 88%,#18212a),var(--match-bg)); transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+#liveFixturesList > .fixture-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.26); }
+.fixture-country-heading { margin-top:18px; border:0; border-bottom:1px solid #34414a; border-radius:0; background:transparent; color:#c5f36a; letter-spacing:.14em; }
+.fixture-league-heading { margin-top:7px; color:#bdc9cc; border-left-color:#c5f36a; }
+.fixture-team-name { font-size:12px; }
+.fixture-score { font-size:14px; }
+.fixture-detail { background:#0d141a; }
+button:not(.fixture-card-trigger):not(.fixture-stats-toggle):not(.live-matches-button):not(.top-leagues-button):not(.admin-nav-button), input[type=submit] { border-color:#c5f36a; background:linear-gradient(135deg,#a5d94c,#d2f786); color:#17200e; }
+button:not(.fixture-card-trigger):not(.fixture-stats-toggle):not(.live-matches-button):not(.top-leagues-button):not(.admin-nav-button):hover, input[type=submit]:hover { background:#e0f9a9; color:#17200e; }
+.live-matches-button[aria-pressed=true] { border-color:#db6d65; background:#2b1b1d; color:#ffb8b1; }
+.live-matches-dot { background:#ef766d; box-shadow:0 0 0 3px rgba(239,118,109,.14); }
+.bet-day-spotlight { background:radial-gradient(ellipse at 100% 0%,rgba(231,169,84,.16),transparent 44%),linear-gradient(150deg,#211d16,#13191b 72%); }
+#plans .price { color:#c5f36a; }
+@media(max-width:680px) { #liveFixturesList { padding:8px; gap:7px; } #liveFixturesList > .fixture-card { padding:11px 9px; } .fixture-status { font-size:8px; } }
+
+.fixture-search-label { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 9px; color: #f0c783; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.fixture-search-label span { color: #8997a8; font-size: 9px; font-weight: 400; letter-spacing: 0; }
+.goal-event-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.goal-event-list li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid #344251; border-radius: 6px; background: #111a24; color: #e5eaf0; font-size: 10px; }
+.goal-event-list li > strong { color: #70dfb5; font-size: 10px; }
+.goal-event-list li > small { color: #9ba8b6; font-size: 9px; text-align: right; }
+.match-goal-events { margin: 0 0 12px; }
+.match-goal-events h4 { margin-bottom: 6px; color: #e7c48f; font-size: 9px; letter-spacing: .1em; }
 </style>
 </head>
 
@@ -1784,10 +1823,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   </article>
   <p id="liveFixturesStatus" hidden>Loading fixtures and match tips...</p>
   <div class="fixture-filters" hidden>
+    <label class="fixture-search-label" for="teamSearch">FIND A FIXTURE <span>Search teams, matchups, or leagues on the selected date</span></label>
     <input
         type="text"
         id="teamSearch"
-        placeholder="Search team..."
+        placeholder="Search a team, match, or league…"
+        autocomplete="off"
     />
 
     <select id="countryFilter">
@@ -2514,6 +2555,39 @@ function renderMatchHistory(container, payload, homeName, awayName) {
 
 function renderMatchStatistics(container, payload, homeName, awayName) {
     container.replaceChildren();
+    const events = Array.isArray(payload?.events) ? payload.events : [];
+    const goals = events.filter((event) => String(event?.type || "").toLowerCase() === "goal");
+    const goalSection = document.createElement("section");
+    goalSection.className = "match-goal-events";
+    const goalHeading = document.createElement("h4");
+    goalHeading.textContent = "GOALS & SCORERS";
+    goalSection.appendChild(goalHeading);
+    if (goals.length) {
+        const goalList = document.createElement("ol");
+        goalList.className = "goal-event-list";
+        goals.forEach((event) => {
+            const row = document.createElement("li");
+            const minute = document.createElement("strong");
+            const elapsed = Number(event.time?.elapsed);
+            const extra = Number(event.time?.extra);
+            minute.textContent = Number.isFinite(elapsed) ? elapsed + (Number.isFinite(extra) && extra > 0 ? "+" + extra : "") + "′" : "—";
+            const details = document.createElement("span");
+            const scorer = event.player?.name || "Scorer not listed";
+            const assist = event.assist?.name ? " · Assist: " + event.assist.name : "";
+            details.textContent = scorer + (event.detail ? " · " + event.detail : "") + assist;
+            const side = document.createElement("small");
+            side.textContent = event.team?.name || "";
+            row.append(minute, details, side);
+            goalList.appendChild(row);
+        });
+        goalSection.appendChild(goalList);
+    } else {
+        const noGoals = document.createElement("p");
+        noGoals.className = "stats-message";
+        noGoals.textContent = "No goal events reported by the live match provider yet.";
+        goalSection.appendChild(noGoals);
+    }
+    container.appendChild(goalSection);
     const teams = Array.isArray(payload?.response) ? payload.response : [];
     if (teams.length < 2) {
         const message = document.createElement("p");
@@ -2580,7 +2654,7 @@ function renderMatchStatistics(container, payload, homeName, awayName) {
     return true;
 }
 
-async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, awayTeamId, container) {
+async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, awayTeamId, fixtureStatus, container) {
     const message = document.createElement("p");
     message.className = "stats-message";
     message.textContent = "Loading match statistics…";
@@ -2597,6 +2671,7 @@ async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, a
             url.searchParams.set("fixture", fixtureId);
             if (homeTeamId) url.searchParams.set("homeTeam", homeTeamId);
             if (awayTeamId) url.searchParams.set("awayTeam", awayTeamId);
+            if (fixtureStatus) url.searchParams.set("status", fixtureStatus);
             const response = await fetch(url, {
                 headers: { apikey: config.publishableKey, Accept: "application/json" }
             });
@@ -2660,12 +2735,35 @@ function createFixtureCard(item, tip, aiPrediction) {
     const shortStatus = item.fixture?.status?.short || "NS";
     status.className = "fixture-status";
     const finishedStatuses = ["FT", "AET", "PEN"];
-    status.textContent = shortStatus === "NS"
-        ? "Upcoming"
-        : finishedStatuses.includes(shortStatus)
-            ? "Finished"
-            : (item.fixture?.status?.long || "Scheduled");
-    if (["1H", "2H", "HT", "ET", "P", "LIVE"].includes(shortStatus)) status.classList.add("is-live");
+    const livePeriods = ["1H", "2H", "ET", "LIVE"];
+    const elapsed = Number(item.fixture?.status?.elapsed);
+    const extra = Number(item.fixture?.status?.extra);
+    if (livePeriods.includes(shortStatus)) {
+        status.classList.add("is-live");
+        status.dataset.livePeriod = shortStatus;
+        status.dataset.liveElapsed = Number.isFinite(elapsed) ? String(elapsed) : "";
+        status.dataset.liveExtra = Number.isFinite(extra) ? String(extra) : "";
+        status.dataset.liveSyncedAt = String(Date.now());
+        status.textContent = Number.isFinite(elapsed) && elapsed > 0
+            ? `LIVE · ${elapsed}${Number.isFinite(extra) && extra > 0 ? `+${extra}` : ""}′`
+            : "LIVE NOW";
+        status.title = "Live match clock from the latest fixture update";
+    } else if (shortStatus === "HT") {
+        status.textContent = "HALF-TIME";
+        status.classList.add("is-live", "is-break");
+    } else if (shortStatus === "BT") {
+        status.textContent = "INTERVAL";
+        status.classList.add("is-live", "is-break");
+    } else if (shortStatus === "P") {
+        status.textContent = "PENALTIES";
+        status.classList.add("is-live");
+    } else {
+        status.textContent = shortStatus === "NS"
+            ? "Upcoming"
+            : finishedStatuses.includes(shortStatus)
+                ? "Finished"
+                : (item.fixture?.status?.long || "Scheduled");
+    }
     if (finishedStatuses.includes(shortStatus)) status.classList.add("is-final");
     top.append(competition, status);
 
@@ -2774,7 +2872,7 @@ function createFixtureCard(item, tip, aiPrediction) {
         details.hidden = expanded;
         if (!expanded && fixtureId && !details.dataset.statsLoaded) {
             details.dataset.statsLoaded = "true";
-            fetchMatchStatistics(fixtureId, homeName, awayName, item.teams?.home?.id, item.teams?.away?.id, stats).then((loaded) => {
+            fetchMatchStatistics(fixtureId, homeName, awayName, item.teams?.home?.id, item.teams?.away?.id, shortStatus, stats).then((loaded) => {
                 if (!loaded) delete details.dataset.statsLoaded;
             });
         } else if (!expanded && !fixtureId && !stats.hasChildNodes()) {
@@ -3064,7 +3162,10 @@ if (countryFilter) {
                 return (
                     (!search ||
                         home.includes(search) ||
-                        away.includes(search)) &&
+                        away.includes(search) ||
+                        (home + " vs " + away).includes(search) ||
+                        league.toLowerCase().includes(search) ||
+                        country.toLowerCase().includes(search)) &&
                     (!selectedLeague ||
                         league === selectedLeague) &&
                   (!selectedCountry ||
@@ -3178,6 +3279,39 @@ window.renderPlace2WinFixtures = renderFixtures;
 });
 
         renderFixtures();
+        if (!window.place2winLiveClockTimer) {
+            window.place2winLiveClockTimer = window.setInterval(() => {
+                document.querySelectorAll(".fixture-status[data-live-period]").forEach((badge) => {
+                    const baseElapsed = Number(badge.dataset.liveElapsed);
+                    const syncedAt = Number(badge.dataset.liveSyncedAt);
+                    if (!badge.dataset.liveElapsed || !Number.isFinite(baseElapsed) || !Number.isFinite(syncedAt)) return;
+                    const minute = baseElapsed + Math.floor((Date.now() - syncedAt) / 60_000);
+                    const extraMinute = Number(badge.dataset.liveExtra);
+                    badge.textContent = `LIVE · ${minute}${Number.isFinite(extraMinute) && extraMinute > 0 ? `+${extraMinute}` : ""}′`;
+                    badge.setAttribute("aria-label", `Live, ${minute}${Number.isFinite(extraMinute) && extraMinute > 0 ? ` plus ${extraMinute}` : ""} minutes`);
+                });
+            }, 15_000);
+        }
+        if (window.place2winFixtureRefreshTimer) window.clearInterval(window.place2winFixtureRefreshTimer);
+        window.place2winFixtureRefreshTimer = window.setInterval(async () => {
+            if (document.visibilityState !== "visible" || requestedDate !== localTodayString) return;
+            try {
+                const refreshResponse = await fetch(fixturesUrl, {
+                    method: "GET",
+                    headers: { "Accept": "application/json", ...(supabaseConfig.publishableKey ? { apikey: supabaseConfig.publishableKey } : {}) },
+                    cache: "no-store"
+                });
+                if (!refreshResponse.ok) return;
+                const refreshed = await refreshResponse.json();
+                if (!Array.isArray(refreshed.response)) return;
+                fixtures = refreshed.response;
+                renderFixtures();
+                const liveCount = fixtures.filter((fixture) => ["1H", "2H", "HT", "ET", "P", "LIVE", "BT"].includes(fixture.fixture?.status?.short)).length;
+                status.textContent = `Live scores refreshed ${new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date())} · ${liveCount} live matches.`;
+            } catch (error) {
+                console.warn("Live scores could not be refreshed", error);
+            }
+        }, 60_000);
         generateAiPredictions(fixtures);
 
     } catch (error) {
