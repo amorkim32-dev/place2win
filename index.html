@@ -2291,18 +2291,21 @@ async function loadMatches() {
   window.place2winTips = data;
   window.dispatchEvent(new CustomEvent("place2win-tips-loaded", { detail: data }));
 
+  // Load ordinary AI picks using columns from the original AI migration.
+  // Results-history columns are optional and must never block card forecasts.
   const { data: aiRows, error: aiError } = await supabase
     .from("ai_match_predictions")
-    .select("fixture_id, home_team, away_team, competition, kickoff_at, prediction, pick_outcome, confidence, rationale, probabilities, admin_overridden, actual_outcome, result_home_score, result_away_score, result_halftime_home_score, result_halftime_away_score, result_source, result_recorded_at");
+    .select("fixture_id, home_team, away_team, competition, kickoff_at, prediction, confidence, rationale, probabilities, model, admin_overridden, generated_at, updated_at")
+    .order("kickoff_at", { ascending: true });
   if (aiError) {
     console.warn("AI prediction cache could not be loaded:", aiError);
+    window.place2winAiPredictions = {};
     const history = document.getElementById("resultsHistoryList");
-    if (history) {
-      const message = document.createElement("p");
-      message.className = "stats-message";
-      message.textContent = "Apply the prediction results migration to enable verified history.";
-      history.replaceChildren(message);
-    }
+    if (history) history.replaceChildren(Object.assign(document.createElement("p"), {
+      className: "stats-message",
+      textContent: "AI predictions could not be loaded. Check the AI predictions table migration and Supabase access policies."
+    }));
+    window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: {} }));
     return;
   }
   // Replace the cache on every auth/entitlement refresh so VIP forecasts
@@ -2310,7 +2313,30 @@ async function loadMatches() {
   window.place2winAiPredictions = Object.fromEntries(
     (aiRows || []).map((row) => [String(row.fixture_id), row])
   );
-  renderPredictionHistory(aiRows || []);
+  window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: window.place2winAiPredictions }));
+
+  // These result columns are added by a separate migration. Keep their failure
+  // local to the history panel so it cannot suppress forecast cards.
+  const { data: historyRows, error: historyError } = await supabase
+    .from("ai_match_predictions")
+    .select("fixture_id, home_team, away_team, competition, kickoff_at, prediction, pick_outcome, confidence, rationale, probabilities, admin_overridden, actual_outcome, result_home_score, result_away_score, result_halftime_home_score, result_halftime_away_score, result_source, result_recorded_at")
+    .order("kickoff_at", { ascending: true });
+  if (historyError) {
+    console.warn("Verified prediction history is not ready:", historyError);
+    const history = document.getElementById("resultsHistoryList");
+    if (history) {
+      const message = document.createElement("p");
+      message.className = "stats-message";
+      message.textContent = "AI picks are available on the match cards. Apply the results-history migration to enable verified history.";
+      history.replaceChildren(message);
+    }
+    return;
+  }
+  // Enrich the forecast cache when the optional 1X2/history columns exist.
+  window.place2winAiPredictions = Object.fromEntries(
+    (historyRows || []).map((row) => [String(row.fixture_id), row])
+  );
+  renderPredictionHistory(historyRows || []);
   window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: window.place2winAiPredictions }));
 }
 window.refreshPlace2WinPredictions = loadMatches;
