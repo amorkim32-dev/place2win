@@ -1682,7 +1682,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 <header>
   <div class="logo">PLACE<span>2</span>WIN</div>
   <nav>
-    <button class="admin-nav-button" type="button" onclick="openPlace2WinAdmin()">Admin Panel</button>
+    <button id="adminNavButton" class="admin-nav-button" type="button" onclick="openPlace2WinAdmin()" hidden>Admin Panel</button>
     <a href="#matchday">Fixtures</a>
     <a href="#resultsHistory">Results</a>
     <a href="#plans">Membership</a>
@@ -3038,13 +3038,11 @@ function showPlace2WinPlans() {
 
 function openPlace2WinAdmin() {
     const panel = document.getElementById("adminPanel");
-    if (panel && panel.style.display !== "none") {
+    if (window.place2winIsAdmin === true && panel && panel.style.display !== "none") {
         panel.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
     }
-    const status = document.getElementById("status");
-    if (status) status.textContent = "Sign in with the administrator account to open the Admin Panel.";
-    document.getElementById("account")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.place2winIsAdmin !== true) return;
 }
   </script>
 <!-- PLACE2WIN ADMIN PANEL -->
@@ -3106,8 +3104,8 @@ function openPlace2WinAdmin() {
 
 <script>
 (function () {
-  const ADMIN_EMAIL = "amorkim32@gmail.com";
   const panel = document.getElementById("adminPanel");
+  const adminButton = document.getElementById("adminNavButton");
   const form = document.getElementById("matchForm");
   const message = document.getElementById("adminMessage");
   const matchList = document.getElementById("adminMatches");
@@ -3115,6 +3113,38 @@ function openPlace2WinAdmin() {
 
   function say(text) {
     message.textContent = text;
+  }
+
+  async function checkAdminAccess(client) {
+    const { data: auth, error: authError } = await client.auth.getUser();
+    if (authError || !auth.user) return false;
+    const { data: admin, error: adminError } = await client
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    if (adminError) {
+      console.warn("Place2Win admin access check failed:", adminError.message);
+      return false;
+    }
+    return Boolean(admin);
+  }
+
+  async function syncAdminVisibility() {
+    const client = window.supabaseClient;
+    let isAdmin = false;
+    if (client && typeof client.from === "function") {
+      try { isAdmin = await checkAdminAccess(client); } catch (error) {
+        console.warn("Place2Win admin access check failed:", error);
+      }
+    }
+    window.place2winIsAdmin = isAdmin;
+    if (adminButton) adminButton.hidden = !isAdmin;
+    if (!isAdmin) {
+      panel.style.display = "none";
+      adminInitialized = false;
+    }
+    return isAdmin;
   }
 
   async function initAdmin() {
@@ -3131,13 +3161,8 @@ function openPlace2WinAdmin() {
       return;
     }
 
-    const { data, error } = await client.auth.getUser();
-
-    if (error || !data.user ||
-        data.user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    if (!await syncAdminVisibility()) {
       say("Admin access denied. Please log in with your admin account.");
-      panel.style.display = "none";
-      adminInitialized = false;
       return;
     }
 
@@ -3456,8 +3481,8 @@ function openPlace2WinAdmin() {
     });
   }
 
-  window.addEventListener("supabase-ready", initAdmin);
-  window.addEventListener("place2win-auth-changed", initAdmin);
+  window.addEventListener("supabase-ready", () => { syncAdminVisibility(); initAdmin(); });
+  window.addEventListener("place2win-auth-changed", () => { syncAdminVisibility(); initAdmin(); });
 if (window.supabaseClient) initAdmin();
 })();
   
