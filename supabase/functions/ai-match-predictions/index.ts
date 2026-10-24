@@ -92,7 +92,8 @@ Deno.serve(async (request) => {
   const footballKey = getApiFootballKey();
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = getSupabaseServiceKey();
-  if (!openAiKey || !footballKey || !supabaseUrl || !serviceKey) {
+  const publishableKey = getSupabasePublishableKey();
+  if (!openAiKey || !footballKey || !supabaseUrl || !serviceKey || !publishableKey) {
     return jsonResponse({ error: "AI predictions are not configured yet." }, 503, origin);
   }
 
@@ -111,12 +112,12 @@ Deno.serve(async (request) => {
 
   // Determine VIP fixtures from the protected saved tips. Fail closed if the
   // lookup fails, so an infrastructure issue cannot turn VIP picks public.
-  const vipMatchesUrl = new URL(`${supabaseUrl}/rest/v1/matches`);
+  const vipMatchesUrl = new URL(`${supabaseUrl}/rest/v1/vip_match_previews`);
   vipMatchesUrl.searchParams.set("is_vip", "eq.true");
   vipMatchesUrl.searchParams.set("select", "home_team,away_team");
   let vipMatchKeys: Set<string>;
   try {
-    const vipMatchesResponse = await fetch(vipMatchesUrl, { headers: restHeaders });
+    const vipMatchesResponse = await fetch(vipMatchesUrl, { headers: { apikey: publishableKey } });
     if (!vipMatchesResponse.ok) throw new Error("Could not verify VIP fixture access.");
     const vipMatches = await vipMatchesResponse.json();
     vipMatchKeys = new Set<string>(vipMatches.map((match: { home_team: string; away_team: string }) => {
