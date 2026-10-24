@@ -27,6 +27,29 @@ function getApiFootballKey() {
     Deno.env.get("APISPORTS_KEY");
 }
 
+function getSupabaseServiceKey() {
+  const legacyKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacyKey) return legacyKey;
+  try {
+    const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    if (typeof secretKeys.default === "string" && secretKeys.default) return secretKeys.default;
+    return Object.values(secretKeys).find((value) => typeof value === "string" && value) as string | undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getSupabasePublishableKey() {
+  const legacyKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (legacyKey) return legacyKey;
+  try {
+    const publishableKeys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
+    if (typeof publishableKeys.default === "string" && publishableKeys.default) return publishableKeys.default;
+    return Object.values(publishableKeys).find((value) => typeof value === "string" && value) as string | undefined;
+  } catch {
+    return undefined;
+  }
+}
 Deno.serve(async (request) => {
   const origin = request.headers.get("origin") ?? "";
   if (!allowedOrigins.has(origin)) return new Response("Origin not allowed", { status: 403 });
@@ -68,7 +91,7 @@ Deno.serve(async (request) => {
   const openAiKey = Deno.env.get("OPENAI_API_KEY");
   const footballKey = getApiFootballKey();
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = getSupabaseServiceKey();
   if (!openAiKey || !footballKey || !supabaseUrl || !serviceKey) {
     return jsonResponse({ error: "AI predictions are not configured yet." }, 503, origin);
   }
@@ -104,7 +127,7 @@ Deno.serve(async (request) => {
   if (bearerToken) {
     try {
       const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-        headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? serviceKey, Authorization: `Bearer ${bearerToken}` },
+        headers: { apikey: getSupabasePublishableKey() ?? serviceKey, Authorization: `Bearer ${bearerToken}` },
       });
       if (userResponse.ok) {
         const user = await userResponse.json();
@@ -304,3 +327,4 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: error instanceof Error ? error.message : "AI predictions could not be generated." }, 502, origin);
   }
 });
+
