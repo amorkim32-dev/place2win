@@ -2845,9 +2845,7 @@ function createFixtureCard(item, tip, aiPrediction) {
         const canForecast = shortStatus === "NS" && fixtureId;
         pending.textContent = canForecast
             ? (window.place2winAiLoadError
-                ? (String(window.place2winAiLoadError).includes("competition does not exist")
-                    ? "AI picks need a Supabase database update: the competition column is missing."
-                    : "AI predictions could not load from Supabase. Check the AI predictions table and access policies.")
+                ? String(window.place2winAiLoadError)
                 : "AI forecast and probabilities are being prepared for this match.")
             : "A pre-match AI forecast is not available for this match.";
         aiState.append(aiHeading, pending);
@@ -2897,11 +2895,8 @@ function createFixtureCard(item, tip, aiPrediction) {
         preview.append(label, document.createTextNode(` · ${aiPrediction.prediction}`));
     } else {
         preview.textContent = window.place2winAiLoadError
-            ? (String(window.place2winAiLoadError).includes("competition does not exist")
-                ? "AI pick unavailable · database update needed"
-                : "AI pick unavailable · Supabase connection issue")
+            ? `AI pick unavailable · ${String(window.place2winAiLoadError).split(".")[0]}`
             : "AI pick is being prepared";
-    }
     card.append(preview, details);
     return card;
 }
@@ -3363,6 +3358,7 @@ async function generateAiPredictions(fixtures) {
         const merged = { ...(window.place2winAiPredictions || {}) };
         for (const prediction of payload.predictions || []) merged[String(prediction.fixture_id)] = prediction;
         window.place2winAiPredictions = merged;
+        window.place2winAiLoadError = false;
         window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: merged }));
         if (payload.predictions?.length && status) {
             status.textContent = `Loaded fixtures and AI predictions. Tap a match for its prediction and statistics.`;
@@ -3373,6 +3369,8 @@ async function generateAiPredictions(fixtures) {
         const message = networkFailure
             ? "AI service is unreachable. Deploy the Supabase ai-match-predictions function, apply its database migration, and set OPENAI_API_KEY."
             : (error.message || "AI predictions could not be generated.");
+        window.place2winAiLoadError = message;
+        window.dispatchEvent(new CustomEvent("place2win-ai-loaded", { detail: window.place2winAiPredictions || {} }));
         if (status) status.textContent = `Fixtures loaded. ${message}`;
         const pending = document.querySelectorAll(".ai-prediction-pending");
         pending.forEach((node) => { node.textContent = message; });
