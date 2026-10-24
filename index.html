@@ -2897,6 +2897,7 @@ function createFixtureCard(item, tip, aiPrediction) {
         preview.textContent = window.place2winAiLoadError
             ? `AI pick unavailable · ${String(window.place2winAiLoadError).split(".")[0]}`
             : "AI pick is being prepared";
+    }
     card.append(preview, details);
     return card;
 }
