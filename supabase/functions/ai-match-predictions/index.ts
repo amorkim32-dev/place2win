@@ -28,17 +28,16 @@ function getApiFootballKey() {
 }
 
 function getSupabaseServiceKey() {
-  const legacyKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (legacyKey) return legacyKey;
   try {
     const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
     if (typeof secretKeys.default === "string" && secretKeys.default) return secretKeys.default;
-    return Object.values(secretKeys).find((value) => typeof value === "string" && value) as string | undefined;
+    const secretKey = Object.values(secretKeys).find((value) => typeof value === "string" && value) as string | undefined;
+    if (secretKey) return secretKey;
   } catch {
-    return undefined;
+    // Fall back to the legacy key when new key variables are unavailable.
   }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 }
-
 function getSupabasePublishableKey() {
   const legacyKey = Deno.env.get("SUPABASE_ANON_KEY");
   if (legacyKey) return legacyKey;
