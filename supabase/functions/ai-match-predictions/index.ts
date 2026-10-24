@@ -27,6 +27,20 @@ function getApiFootballKey() {
     Deno.env.get("APISPORTS_KEY");
 }
 
+function describeFootballProviderFailure(status: number, errors: unknown) {
+  const detail = JSON.stringify(errors ?? {}).toLowerCase();
+  console.error("API-Football prediction request failed", { status, errors });
+  if (status === 429 || /quota|daily limit|requests? limit|rate limit|too many requests/.test(detail)) {
+    return "API-Football has reached its daily request limit. Predictions will work again when the quota resets.";
+  }
+  if (status === 401 || status === 403 || /api.?key|token|authori[sz]|unauthori[sz]/.test(detail)) {
+    return "API-Football rejected the configured key. Check the API_FOOTBALL_KEY secret in Supabase.";
+  }
+  if (/plan|subscription|access denied|not allowed/.test(detail)) {
+    return "API-Football did not allow this predictions request. Check the plan and fixture coverage in its dashboard.";
+  }
+  return "API-Football could not return a forecast for this fixture. Check its dashboard usage and fixture coverage.";
+}
 function getSupabaseServiceKey() {
   try {
     const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
@@ -184,7 +198,7 @@ Deno.serve(async (request) => {
           );
           const payload = await response.json();
           if (!response.ok || (payload.errors && Object.keys(payload.errors).length)) {
-            throw new Error("Football analysis could not be loaded.");
+            throw new Error(describeFootballProviderFailure(response.status, payload.errors));
           }
           const item = payload.response?.[0];
           const fixture = item?.fixture;
