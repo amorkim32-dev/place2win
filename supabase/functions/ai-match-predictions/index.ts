@@ -96,7 +96,13 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "AI predictions are not configured yet." }, 503, origin);
   }
 
-  const restHeaders = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` };
+  // Supabase's new sb_secret_ API keys are sent only as `apikey`; they are not
+  // JWTs and fail when put in Authorization. Keep the Bearer header only for
+  // legacy service_role JWTs.
+  const restHeaders = {
+    apikey: serviceKey,
+    ...(!serviceKey.startsWith("sb_secret_") ? { Authorization: `Bearer ${serviceKey}` } : {}),
+  };
   const normalizeTeam = (value: unknown) => String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
