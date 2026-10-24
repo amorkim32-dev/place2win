@@ -189,38 +189,35 @@ Deno.serve(async (request) => {
 
     if (missingIds.length) {
       const footballResults: Array<Record<string, unknown>> = [];
-      for (let index = 0; index < missingIds.length; index += 5) {
-        const batch = missingIds.slice(index, index + 5);
-        const batchResults = await Promise.all(batch.map(async (id) => {
-          const response = await fetch(
-            `https://v3.football.api-sports.io/predictions?fixture=${id}`,
-            { headers: { "x-apisports-key": footballKey, "Accept": "application/json" } },
-          );
-          const payload = await response.json();
-          if (!response.ok || (payload.errors && Object.keys(payload.errors).length)) {
-            throw new Error(describeFootballProviderFailure(response.status, payload.errors));
-          }
-          const item = payload.response?.[0];
-          const fixture = item?.fixture;
-          if (!item) return null;
-          return {
-            fixture_id: id,
-            home_team: item.teams?.home?.name || "Home team",
-            away_team: item.teams?.away?.name || "Away team",
-            competition: item.league?.name || "Football",
-            kickoff_at: fixture?.date || new Date().toISOString(),
-            prediction: item.predictions?.advice || "",
-            winner: item.predictions?.winner?.name || null,
-            under_over: item.predictions?.under_over || null,
-            goals: item.predictions?.goals || null,
-            probabilities: item.predictions?.percent || {},
-            comparison: item.comparison || {},
-            teams: item.teams || {},
-          };
-        }));
-        footballResults.push(...batchResults.filter((item): item is Record<string, unknown> => Boolean(item)));
+      // Process fixtures one at a time so a provider quota/key error stops
+      // the request before more API calls are launched.
+      for (const id of missingIds) {
+        const response = await fetch(
+          `https://v3.football.api-sports.io/predictions?fixture=${id}`,
+          { headers: { "x-apisports-key": footballKey, "Accept": "application/json" } },
+        );
+        const payload = await response.json();
+        if (!response.ok || (payload.errors && Object.keys(payload.errors).length)) {
+          throw new Error(describeFootballProviderFailure(response.status, payload.errors));
+        }
+        const item = payload.response?.[0];
+        const fixture = item?.fixture;
+        if (!item) continue;
+        footballResults.push({
+          fixture_id: id,
+          home_team: item.teams?.home?.name || "Home team",
+          away_team: item.teams?.away?.name || "Away team",
+          competition: item.league?.name || "Football",
+          kickoff_at: fixture?.date || new Date().toISOString(),
+          prediction: item.predictions?.advice || "",
+          winner: item.predictions?.winner?.name || null,
+          under_over: item.predictions?.under_over || null,
+          goals: item.predictions?.goals || null,
+          probabilities: item.predictions?.percent || {},
+          comparison: item.comparison || {},
+          teams: item.teams || {},
+        });
       }
-
       if (footballResults.length) {
         const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
