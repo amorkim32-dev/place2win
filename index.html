@@ -1715,6 +1715,19 @@ header .logo span { color:#c5f36a; }
 .fixture-browse-count { flex:none; color:#c5f36a; font-size:10px; font-weight:700; }
 .fixture-browse-title { grid-column:1/-1; margin:2px 0 3px; color:#aab7b8; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
 .fixture-browse-empty { grid-column:1/-1; margin:8px 0; color:#9ba9b2; font-size:11px; }
+#liveFixturesList > .fixture-card:nth-child(5n + 1), #liveFixturesList > .fixture-card:nth-child(5n + 2), #liveFixturesList > .fixture-card:nth-child(5n + 3), #liveFixturesList > .fixture-card:nth-child(5n + 4), #liveFixturesList > .fixture-card:nth-child(5n + 5) { --match-bg:#151a1e; --match-accent:#c5f36a; }
+body.is-match-page { min-height:100vh; background:#080d13; }
+body.is-match-page > :not(#matchViewPage) { display:none !important; }
+body.is-match-page > #matchViewPage { display:block; width:min(820px,calc(100% - 32px)); min-height:100vh; margin:0 auto; padding:24px 0 40px; }
+.match-view-top, .match-view-bottom { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.match-view-bottom { justify-content:flex-start; margin-top:18px; }
+#matchViewPage .match-back-link { display:inline-flex; align-items:center; min-height:34px; padding:7px 11px; border:1px solid #3b444a; border-radius:6px; color:#eef2e8; background:#151a1e; font-size:11px; font-weight:700; text-decoration:none; }
+#matchViewPage .match-back-link:hover { border-color:#c5f36a; color:#c5f36a; }
+.match-view-kicker { color:#c5f36a; font-size:9px; font-weight:800; letter-spacing:.14em; }
+#matchViewTitle { margin:24px 0 4px; color:#f1f3ed; font-size:24px; }
+#matchViewStatus { margin:0 0 16px; color:#99a4a5; font-size:11px; }
+#matchViewList { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+#matchViewList > .fixture-card { --match-bg:#151a1e; --match-accent:#c5f36a; width:100%; margin:0; }
 .fixture-filters #countryFilter, .fixture-filters #leagueFilter { display:none; }
 .fixture-filters { grid-template-columns:minmax(180px,1.7fr) minmax(135px,1fr) auto minmax(140px,1fr); }
 @media (max-width:900px) { .fixture-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } .fixture-filters input[type="text"] { grid-column:1/-1; } }
@@ -1753,6 +1766,22 @@ button:not(.fixture-card-trigger):not(.fixture-stats-toggle):not(.live-matches-b
     <a href="#account">Sign in</a>
   </nav>
 </header>
+
+<section id="matchViewPage" hidden aria-labelledby="matchViewTitle">
+  <div class="match-view-top"><a class="match-back-link" href="./#matchday">← Back to fixtures</a><span class="match-view-kicker">PLACE2WIN MATCH CENTRE</span></div>
+  <h1 id="matchViewTitle">Match centre</h1>
+  <p id="matchViewStatus" role="status" aria-live="polite">Loading match details…</p>
+  <div id="matchViewList"></div>
+  <div class="match-view-bottom"><a class="match-back-link" href="./#matchday">← Back to fixtures</a></div>
+</section>
+<script>
+if (new URLSearchParams(window.location.search).has("match")) {
+  document.body.classList.add("is-match-page");
+  const matchPage = document.getElementById("matchViewPage");
+  if (matchPage) matchPage.hidden = false;
+  document.title = "Match centre | Place2Win";
+}
+</script>
 
 <aside class="dashboard-rail" aria-label="Quick navigation">
   <a href="#home" aria-label="Dashboard" title="Dashboard">⌂</a>
@@ -2709,10 +2738,11 @@ async function fetchMatchStatistics(fixtureId, homeName, awayName, homeTeamId, a
     }
 }
 
-function createFixtureCard(item, tip, aiPrediction) {
+function createFixtureCard(item, tip, aiPrediction, openDetails = false) {
     const card = document.createElement("article");
     card.className = "fixture-card";
     const fixtureId = item.fixture?.id;
+    const isDedicatedMatchPage = new URLSearchParams(window.location.search).has("match");
     const homeName = item.teams?.home?.name || "Home team";
     const awayName = item.teams?.away?.name || "Away team";
     const detailId = `match-details-${fixtureId || Math.random().toString(36).slice(2)}`;
@@ -2875,21 +2905,33 @@ function createFixtureCard(item, tip, aiPrediction) {
     const stats = document.createElement("div");
     stats.className = "fixture-stats";
     details.append(statsHeading, stats);
-    trigger.addEventListener("click", () => {
-        const expanded = trigger.getAttribute("aria-expanded") === "true";
-        trigger.setAttribute("aria-expanded", String(!expanded));
-        details.hidden = expanded;
-        if (!expanded && fixtureId && !details.dataset.statsLoaded) {
+    const loadStats = () => {
+        if (fixtureId && !details.dataset.statsLoaded) {
             details.dataset.statsLoaded = "true";
             fetchMatchStatistics(fixtureId, homeName, awayName, item.teams?.home?.id, item.teams?.away?.id, shortStatus, stats).then((loaded) => {
                 if (!loaded) delete details.dataset.statsLoaded;
             });
-        } else if (!expanded && !fixtureId && !stats.hasChildNodes()) {
+        } else if (!fixtureId && !stats.hasChildNodes()) {
             const message = document.createElement("p");
             message.className = "stats-message";
             message.textContent = "Statistics are not available for this fixture.";
             stats.appendChild(message);
         }
+    };
+    trigger.addEventListener("click", () => {
+        if (!isDedicatedMatchPage && fixtureId) {
+            const destination = new URL(window.location.href);
+            destination.searchParams.set("match", String(fixtureId));
+            const fixtureDate = String(item.fixture?.date || "").slice(0, 10);
+            if (fixtureDate) destination.searchParams.set("date", fixtureDate);
+            destination.hash = "matchday";
+            window.location.assign(destination.toString());
+            return;
+        }
+        const expanded = trigger.getAttribute("aria-expanded") === "true";
+        trigger.setAttribute("aria-expanded", String(!expanded));
+        details.hidden = expanded;
+        if (!expanded) loadStats();
     });
     card.appendChild(trigger);
     const preview = document.createElement("div");
@@ -2910,6 +2952,11 @@ function createFixtureCard(item, tip, aiPrediction) {
             : "AI pick is being prepared";
     }
     card.append(preview, details);
+    if (openDetails) {
+        trigger.setAttribute("aria-expanded", "true");
+        details.hidden = false;
+        loadStats();
+    }
     return card;
 }
 
@@ -3008,7 +3055,8 @@ async function loadLiveFixtures(selectedDate = "") {
     const countryFilter = document.getElementById("countryFilter");
     const localToday = new Date();
     const localTodayString = `${localToday.getFullYear()}-${String(localToday.getMonth() + 1).padStart(2, "0")}-${String(localToday.getDate()).padStart(2, "0")}`;
-    const requestedDate = selectedDate || dateFilter?.value || localTodayString;
+    const matchPageDate = new URLSearchParams(window.location.search).get("date");
+    const requestedDate = selectedDate || matchPageDate || dateFilter?.value || localTodayString;
     if (dateFilter) dateFilter.value = requestedDate;
     if (loadFixtureDate) {
         loadFixtureDate.onclick = () => loadLiveFixtures(dateFilter?.value || localTodayString);
@@ -3142,6 +3190,7 @@ if (countryFilter) {
             const selectedLeague = leagueFilter?.value || "";
           const selectedCountry = countryFilter?.value || "";
             const selectedTime = timeFilter?.value || "";
+            const requestedMatchId = new URLSearchParams(window.location.search).get("match");
             const liveStatuses = ["1H", "2H", "HT", "ET", "P", "LIVE", "BT"];
             const liveFixtures = fixtures.filter(item => liveStatuses.includes(item.fixture?.status?.short));
             const topFiveFixtures = fixtures.filter(isTopFiveLeague);
@@ -3164,6 +3213,8 @@ if (countryFilter) {
                 const kickoffTime = kickoff && !Number.isNaN(kickoff.getTime())
                     ? `${String(kickoff.getHours()).padStart(2, "0")}:${String(kickoff.getMinutes()).padStart(2, "0")}`
                     : "";
+
+                if (requestedMatchId) return String(item.fixture?.id) === requestedMatchId;
 
                 return (
                     (!search ||
@@ -3202,8 +3253,6 @@ if (countryFilter) {
             const tips = window.place2winTips || [];
             const aiPredictions = window.place2winAiPredictions || {};
             const usedTips = new Set();
-            let cardIndex = 0;
-            const cardPalette = [["#17253a", "#42d6c6"], ["#211d39", "#b49dff"], ["#172b32", "#72d8c4"], ["#29243a", "#e0adf2"], ["#1b2942", "#8daeff"]];
             const hasFilters = Boolean(search || selectedLeague || selectedCountry || selectedTime || showLiveOnly || showTopFiveOnly);
             const createBrowseButton = (label, count, className, onClick) => {
                 const button = document.createElement("button");
@@ -3238,6 +3287,45 @@ if (countryFilter) {
                 list.appendChild(note);
             };
 
+            if (requestedMatchId) {
+                document.body.classList.add("is-match-page");
+                const matchViewPage = document.getElementById("matchViewPage");
+                const matchViewList = document.getElementById("matchViewList");
+                const matchViewStatus = document.getElementById("matchViewStatus");
+                if (matchViewPage) matchViewPage.hidden = false;
+                if (matchViewList) matchViewList.replaceChildren();
+                const item = filtered[0];
+                if (!item) {
+                    if (matchViewStatus) matchViewStatus.textContent = "This match could not be found for the selected date. Return to fixtures and open it again.";
+                    return;
+                }
+                const home = normalizedTeam(item.teams?.home?.name);
+                const away = normalizedTeam(item.teams?.away?.name);
+                const tipIndex = tips.findIndex((tip, index) => {
+                    if (usedTips.has(index)) return false;
+                    const tipHome = normalizedTeam(tip.home_team);
+                    const tipAway = normalizedTeam(tip.away_team);
+                    return (tipHome === home && tipAway === away) || (tipHome === away && tipAway === home);
+                });
+                const tip = tipIndex >= 0 ? tips[tipIndex] : null;
+                if (tip) usedTips.add(tipIndex);
+                const aiPrediction = aiPredictions[String(item.fixture?.id)];
+                const card = createFixtureCard(item, tip, aiPrediction, true);
+                if (matchViewList) matchViewList.appendChild(card);
+                const kickoff = item.fixture?.date ? new Date(item.fixture.date) : null;
+                const kickoffLabel = kickoff && !Number.isNaN(kickoff.getTime()) ? kickoff.toLocaleString() : "Kickoff time unavailable";
+                const homeName = item.teams?.home?.name || "Home team";
+                const awayName = item.teams?.away?.name || "Away team";
+                document.title = homeName + " vs " + awayName + " | Place2Win Match Centre";
+                if (matchViewStatus) matchViewStatus.textContent = (item.league?.country || "Football") + " · " + (item.league?.name || "Football") + " · " + kickoffLabel;
+                return;
+            }
+
+            document.body.classList.remove("is-match-page");
+            const matchViewPage = document.getElementById("matchViewPage");
+            if (matchViewPage) matchViewPage.hidden = true;
+            document.title = "Place2Win | Matchday";
+
             if (!filtered.length) {
                 const emptyMessage = showTopFiveOnly
                     ? "No Big 5 league fixtures are scheduled for " + requestedDate + ". Choose another date to see their matches and scores."
@@ -3250,11 +3338,14 @@ if (countryFilter) {
                 const countries = new Map();
                 filtered.forEach((item) => {
                     const name = item.league?.country?.trim() || "Other competitions";
-                    countries.set(name, (countries.get(name) || 0) + 1);
+                    const group = countries.get(name) || { count: 0, isTopFive: false };
+                    group.count += 1;
+                    group.isTopFive = group.isTopFive || isTopFiveLeague(item);
+                    countries.set(name, group);
                 });
                 const grid = createBrowseGrid(search || hasFilters ? "Countries with matching fixtures" : "Choose a country");
-                [...countries.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([country, count]) => {
-                    grid.appendChild(createBrowseButton(country, count, "fixture-browse-card", () => {
+                [...countries.entries()].sort(([aName, a], [bName, b]) => Number(b.isTopFive) - Number(a.isTopFive) || aName.localeCompare(bName)).forEach(([country, group]) => {
+                    grid.appendChild(createBrowseButton(country, group.count, "fixture-browse-card", () => {
                         countryFilter.value = country;
                         leagueFilter.value = "";
                         renderFixtures();
@@ -3311,9 +3402,6 @@ if (countryFilter) {
                 if (tip) usedTips.add(tipIndex);
                 const aiPrediction = aiPredictions[String(item.fixture?.id)];
                 const card = createFixtureCard(item, tip, aiPrediction);
-                const [cardBackground, cardAccent] = cardPalette[cardIndex++ % cardPalette.length];
-                card.style.setProperty("--match-bg", cardBackground);
-                card.style.setProperty("--match-accent", cardAccent);
                 list.appendChild(card);
             });
         }
