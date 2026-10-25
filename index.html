@@ -1708,6 +1708,13 @@ header .logo span { color:#c5f36a; }
 #liveFixturesList > .fixture-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.26); }
 .fixture-country-heading { margin-top:18px; border:0; border-bottom:1px solid #34414a; border-radius:0; background:transparent; color:#c5f36a; letter-spacing:.14em; }
 .fixture-league-heading { margin-top:7px; color:#bdc9cc; border-left-color:#c5f36a; }
+#liveFixturesList .fixture-browse-back { grid-column:1/-1; justify-self:start; min-height:30px; padding:6px 10px; border:1px solid #36444a; border-radius:6px; background:#131b20; color:#dce5dd; font-size:10px; cursor:pointer; }
+.fixture-browse-grid { grid-column:1/-1; display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; width:100%; }
+#liveFixturesList .fixture-browse-card { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:54px; padding:11px 13px; border:1px solid #293942; border-left:3px solid #c5f36a; border-radius:7px; background:linear-gradient(120deg,#141f24,#11171c); color:#eef4ed; text-align:left; font-size:12px; font-weight:700; cursor:pointer; transition:transform .16s ease,border-color .16s ease,background .16s ease; }
+#liveFixturesList .fixture-browse-card:hover { transform:translateY(-1px); border-color:#c5f36a; background:#19251f; }
+.fixture-browse-count { flex:none; color:#c5f36a; font-size:10px; font-weight:700; }
+.fixture-browse-title { grid-column:1/-1; margin:2px 0 3px; color:#aab7b8; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+.fixture-browse-empty { grid-column:1/-1; margin:8px 0; color:#9ba9b2; font-size:11px; }
 .fixture-team-name { font-size:12px; }
 .fixture-score { font-size:14px; }
 .fixture-detail { background:#0d141a; }
@@ -3036,8 +3043,7 @@ if (countryFilter) {
 
     const countries = [...new Set(
         fixtures
-            .map(item => item.league?.country)
-            .filter(country => country && country.trim())
+            .map(item => item.league?.country?.trim() || "Other competitions")
     )].sort();
 
     countryFilter.innerHTML =
@@ -3149,7 +3155,7 @@ if (countryFilter) {
                 const away = (item.teams?.away?.name || "")
                     .toLowerCase();
                 const league = item.league?.name || "";
-              const country = item.league?.country || "";
+              const country = item.league?.country?.trim() || "Other competitions";
                 const kickoff = item.fixture?.date ? new Date(item.fixture.date) : null;
                 const kickoffTime = kickoff && !Number.isNaN(kickoff.getTime())
                     ? `${String(kickoff.getHours()).padStart(2, "0")}:${String(kickoff.getMinutes()).padStart(2, "0")}`
@@ -3183,45 +3189,119 @@ if (countryFilter) {
                 return aStarted - bStarted;
             });
 
+            if (!selectedCountry && selectedLeague && filtered.length) {
+                countryFilter.value = filtered[0].league?.country?.trim() || "Other competitions";
+                renderFixtures();
+                return;
+            }
+
             const tips = window.place2winTips || [];
             const aiPredictions = window.place2winAiPredictions || {};
             const usedTips = new Set();
-            let previousCountry = null;
-            let previousLeague = null;
             let cardIndex = 0;
-            const cardPalette = [
-                ["#17253a", "#42d6c6"],
-                ["#211d39", "#b49dff"],
-                ["#172b32", "#72d8c4"],
-                ["#29243a", "#e0adf2"],
-                ["#1b2942", "#8daeff"],
-            ];
+            const cardPalette = [["#17253a", "#42d6c6"], ["#211d39", "#b49dff"], ["#172b32", "#72d8c4"], ["#29243a", "#e0adf2"], ["#1b2942", "#8daeff"]];
+            const hasFilters = Boolean(search || selectedLeague || selectedCountry || selectedTime || showLiveOnly || showTopFiveOnly);
+            const createBrowseButton = (label, count, className, onClick) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = className;
+                const text = document.createElement("span");
+                text.textContent = label;
+                button.appendChild(text);
+                if (count !== null) {
+                    const badge = document.createElement("span");
+                    badge.className = "fixture-browse-count";
+                    badge.textContent = count + " " + (count === 1 ? "match" : "matches");
+                    button.appendChild(badge);
+                }
+                button.addEventListener("click", onClick);
+                return button;
+            };
+            const createBrowseGrid = (title) => {
+                const wrapper = document.createElement("div");
+                wrapper.className = "fixture-browse-grid";
+                const heading = document.createElement("h3");
+                heading.className = "fixture-browse-title";
+                heading.textContent = title;
+                wrapper.appendChild(heading);
+                list.appendChild(wrapper);
+                return wrapper;
+            };
+            const showBrowseEmpty = (message) => {
+                const note = document.createElement("p");
+                note.className = "fixture-browse-empty";
+                note.textContent = message;
+                list.appendChild(note);
+            };
+
+            if (!filtered.length) {
+                const emptyMessage = showTopFiveOnly
+                    ? "No Big 5 league fixtures are scheduled for " + requestedDate + ". Choose another date to see their matches and scores."
+                    : hasFilters ? "No matches match your filters." : "No fixtures are available right now.";
+                showBrowseEmpty(emptyMessage);
+                return;
+            }
+
+            if (!selectedCountry) {
+                const countries = new Map();
+                filtered.forEach((item) => {
+                    const name = item.league?.country?.trim() || "Other competitions";
+                    countries.set(name, (countries.get(name) || 0) + 1);
+                });
+                const grid = createBrowseGrid(search || hasFilters ? "Countries with matching fixtures" : "Choose a country");
+                [...countries.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([country, count]) => {
+                    grid.appendChild(createBrowseButton(country, count, "fixture-browse-card", () => {
+                        countryFilter.value = country;
+                        leagueFilter.value = "";
+                        renderFixtures();
+                    }));
+                });
+                return;
+            }
+
+            if (!selectedLeague) {
+                list.appendChild(createBrowseButton("← All countries", null, "fixture-browse-back", () => {
+                    countryFilter.value = "";
+                    leagueFilter.value = "";
+                    renderFixtures();
+                }));
+                const leagues = new Map();
+                filtered.forEach((item) => {
+                    const name = item.league?.name?.trim() || "Football";
+                    leagues.set(name, (leagues.get(name) || 0) + 1);
+                });
+                const grid = createBrowseGrid(selectedCountry + " · choose a league");
+                [...leagues.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([league, count]) => {
+                    grid.appendChild(createBrowseButton(league, count, "fixture-browse-card", () => {
+                        leagueFilter.value = league;
+                        renderFixtures();
+                    }));
+                });
+                return;
+            }
+
+            list.appendChild(createBrowseButton("← All countries", null, "fixture-browse-back", () => {
+                countryFilter.value = "";
+                leagueFilter.value = "";
+                renderFixtures();
+            }));
+            list.appendChild(createBrowseButton("← " + selectedCountry + " leagues", null, "fixture-browse-back", () => {
+                leagueFilter.value = "";
+                renderFixtures();
+            }));
+            const selectedLeagueHeading = document.createElement("div");
+            selectedLeagueHeading.className = "fixture-browse-title";
+            selectedLeagueHeading.textContent = selectedCountry + " · " + selectedLeague;
+            list.appendChild(selectedLeagueHeading);
+
             filtered.forEach((item) => {
-                const countryName = item.league?.country?.trim() || "Other competitions";
-                const leagueName = item.league?.name?.trim() || "Football";
-                if (countryName !== previousCountry) {
-                    const countryHeading = document.createElement("div");
-                    countryHeading.className = "fixture-country-heading";
-                    countryHeading.textContent = countryName;
-                    list.appendChild(countryHeading);
-                    previousCountry = countryName;
-                    previousLeague = null;
-                }
-                if (leagueName !== previousLeague) {
-                    const leagueHeading = document.createElement("div");
-                    leagueHeading.className = "fixture-league-heading";
-                    leagueHeading.textContent = leagueName;
-                    list.appendChild(leagueHeading);
-                    previousLeague = leagueName;
-                }
                 const home = normalizedTeam(item.teams?.home?.name);
                 const away = normalizedTeam(item.teams?.away?.name);
                 const tipIndex = tips.findIndex((tip, index) => {
                     if (usedTips.has(index)) return false;
                     const tipHome = normalizedTeam(tip.home_team);
                     const tipAway = normalizedTeam(tip.away_team);
-                    return (tipHome === home && tipAway === away) ||
-                        (tipHome === away && tipAway === home);
+                    return (tipHome === home && tipAway === away) || (tipHome === away && tipAway === home);
                 });
                 const tip = tipIndex >= 0 ? tips[tipIndex] : null;
                 if (tip) usedTips.add(tipIndex);
@@ -3232,21 +3312,6 @@ if (countryFilter) {
                 card.style.setProperty("--match-accent", cardAccent);
                 list.appendChild(card);
             });
-
-            const hasFilters = Boolean(search || selectedLeague || selectedCountry || selectedTime || showLiveOnly || showTopFiveOnly);
-            if (!hasFilters) {
-                tips.forEach((tip, index) => {
-                    if (!usedTips.has(index)) list.appendChild(createTipOnlyCard(tip));
-                });
-            }
-            if (!filtered.length && !list.children.length) {
-                const emptyMessage = showTopFiveOnly
-                    ? `No Big 5 league fixtures are scheduled for ${requestedDate}. Choose another date to see their matches and scores.`
-                    : hasFilters
-                        ? "No matches match your filters."
-                        : "No fixtures or tips are available right now.";
-                list.innerHTML = `<p class="fixture-empty">${emptyMessage}</p>`;
-            }
         }
 
 window.renderPlace2WinFixtures = renderFixtures;
