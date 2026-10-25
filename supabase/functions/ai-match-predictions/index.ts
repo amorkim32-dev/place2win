@@ -41,6 +41,17 @@ function describeFootballProviderFailure(status: number, errors: unknown) {
   }
   return "API-Football could not return a forecast for this fixture. Check its dashboard usage and fixture coverage.";
 }
+function describeOpenAiFailure(status: number, error: unknown) {
+  const details = error && typeof error === "object" ? error as Record<string, unknown> : {};
+  const code = String(details.code || details.type || "").toLowerCase();
+  console.error("OpenAI prediction request failed", { status, code });
+  if (status === 401 || code.includes("invalid_api_key")) return "OpenAI rejected OPENAI_API_KEY. Replace that Supabase secret with a valid OpenAI API key.";
+  if (status === 429 && (code.includes("insufficient_quota") || code.includes("billing"))) return "OpenAI API billing or usage quota is exhausted. Add API billing or credits in OpenAI Platform, then retry.";
+  if (status === 429 || code.includes("rate_limit")) return "OpenAI API rate limit reached. Wait briefly, then retry the prediction.";
+  if (status === 403 || status === 404 || code.includes("model_not_found")) return "The configured OpenAI model is unavailable to this API project. Check OPENAI_MODEL access in Supabase.";
+  if (status >= 500) return "OpenAI is temporarily unavailable. Please retry later.";
+  return "OpenAI rejected the prediction request (HTTP " + status + (code ? ", " + code : "") + "). Check the OPENAI_MODEL setting and function logs.";
+}
 function getSupabaseServiceKey() {
   try {
     const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
@@ -279,8 +290,7 @@ Deno.serve(async (request) => {
         });
         const completion = await openAiResponse.json();
         if (!openAiResponse.ok) {
-          console.error("OpenAI prediction request failed:", completion.error?.type || openAiResponse.status);
-          throw new Error("The AI model could not generate predictions.");
+          throw new Error(describeOpenAiFailure(openAiResponse.status, completion.error));
         }
         const content = completion.choices?.[0]?.message?.content;
         if (!content) throw new Error("The AI model returned no predictions.");
