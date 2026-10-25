@@ -1715,6 +1715,10 @@ header .logo span { color:#c5f36a; }
 .fixture-browse-count { flex:none; color:#c5f36a; font-size:10px; font-weight:700; }
 .fixture-browse-title { grid-column:1/-1; margin:2px 0 3px; color:#aab7b8; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
 .fixture-browse-empty { grid-column:1/-1; margin:8px 0; color:#9ba9b2; font-size:11px; }
+.fixture-filters #countryFilter, .fixture-filters #leagueFilter { display:none; }
+.fixture-filters { grid-template-columns:minmax(180px,1.7fr) minmax(135px,1fr) auto minmax(140px,1fr); }
+@media (max-width:900px) { .fixture-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } .fixture-filters input[type="text"] { grid-column:1/-1; } }
+@media (max-width:420px) { .fixture-filters { grid-template-columns:1fr 1fr; } .fixture-filters input[type="text"] { grid-column:1/-1; } }
 .fixture-team-name { font-size:12px; }
 .fixture-score { font-size:14px; }
 .fixture-detail { background:#0d141a; }
