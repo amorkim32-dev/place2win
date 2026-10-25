@@ -3476,6 +3476,10 @@ window.renderPlace2WinFixtures = renderFixtures;
                 : "Fixture service could not be reached. Check the Supabase fixtures function and its CORS settings.")
             : "Could not load fixtures: " + error.message;
         status.textContent = loadError;
+        const matchViewStatus = document.getElementById("matchViewStatus");
+        if (new URLSearchParams(window.location.search).has("match") && matchViewStatus) {
+            matchViewStatus.textContent = "Match details are unavailable because fixtures could not load. " + loadError;
+        }
         list.replaceChildren();
         const tips = window.place2winTips || [];
         tips.forEach((tip) => list.appendChild(createTipOnlyCard(tip)));
