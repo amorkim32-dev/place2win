@@ -2,7 +2,6 @@ const allowedOrigins = new Set([
   "https://amorkim32-dev.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  "null",
 ]);
 
 const callsByAddress = new Map<string, { expiresAt: number; count: number }>();
@@ -214,6 +213,14 @@ Deno.serve(async (request) => {
         const item = payload.response?.[0];
         const fixture = item?.fixture;
         if (!item) continue;
+        let injuries: unknown[] = [];
+        try {
+          const injuryResponse = await fetch(`https://v3.football.api-sports.io/injuries?fixture=${id}`, {
+            headers: { "x-apisports-key": footballKey, "Accept": "application/json" },
+          });
+          const injuryPayload = await injuryResponse.json();
+          if (injuryResponse.ok && !Object.keys(injuryPayload.errors || {}).length && Array.isArray(injuryPayload.response)) injuries = injuryPayload.response;
+        } catch { /* availability data is optional and never fabricated */ }
         footballResults.push({
           fixture_id: id,
           home_team: item.teams?.home?.name || "Home team",
@@ -227,6 +234,7 @@ Deno.serve(async (request) => {
           probabilities: item.predictions?.percent || {},
           comparison: item.comparison || {},
           teams: item.teams || {},
+          injuries,
         });
       }
       if (footballResults.length) {
@@ -239,50 +247,12 @@ Deno.serve(async (request) => {
           body: JSON.stringify({
             model: Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini",
             temperature: 0.2,
-            max_tokens: 2500,
-            response_format: {
-              type: "json_schema",
-              json_schema: {
-                name: "football_match_predictions",
-                strict: true,
-                schema: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["predictions"],
-                  properties: {
-                    predictions: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        additionalProperties: false,
-                        required: ["fixture_id", "prediction", "pick_outcome", "confidence", "rationale", "probabilities"],
-                        properties: {
-                          fixture_id: { type: "integer" },
-                          prediction: { type: "string" },
-                          pick_outcome: { type: "string", enum: ["home", "draw", "away"] },
-                          confidence: { type: "integer" },
-                          rationale: { type: "string" },
-                          probabilities: {
-                            type: "object",
-                            additionalProperties: false,
-                            required: ["home", "draw", "away"],
-                            properties: {
-                              home: { type: "number" },
-                              draw: { type: "number" },
-                              away: { type: "number" },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            max_tokens: 6000,
+            response_format: { type: "json_object" },
             messages: [
               {
                 role: "system",
-                content: "You are a cautious football forecasting assistant. Use only the supplied fixture, form, comparison, and provider forecast data. Never invent injuries, lineups, odds, or facts. Choose exactly one 1X2 outcome: home team win, draw, or away team win. Set pick_outcome to home, draw, or away and make the prediction text describe that same selection. Explain briefly using the evidence. Probabilities must be percentages from 0 to 100 and sum to 100. Confidence is a separate 1-100 estimate of forecast confidence, not a guarantee. If evidence is weak, say so and keep confidence low. This is an uncertain forecast, never a promise.",
+                content: "Return one JSON object with a predictions array. For each fixture use only supplied API-Football fixture, comparison, team form, prediction and injury data. Never invent statistics, injuries, suspensions, lineups, odds or news. Include fixture_id, prediction, pick_outcome (home/draw/away), confidence (1–100), rationale, probabilities {home,draw,away}, markets {matchWinner:{selection,confidence,probabilities:{home,draw,away}},doubleChance:{selection:1X|X2|12,confidence,probability},btts:{selection:Yes|No,confidence,yes,no},over15:{selection:Over 1.5|Under 1.5,confidence,over,under},over25:{selection:Over 2.5|Under 2.5,confidence,over,under},over35:{selection:Over 3.5|Under 3.5,confidence,over,under},correctScore:{selection,confidence},halfTimeResult:{selection:home|draw|away,confidence,probabilities:{home,draw,away}},halfTimeFullTime:{selection:1/1|1/X|1/2|X/1|X/X|X/2|2/1|2/X|2/2,confidence},asianHandicap:{selection,confidence},risk:Low|Medium|High}, analysis:{summary,importantFactors,recentPerformance,attackingStrength,defensiveStrength,homeAwayContext,injuryContext}. Keep probabilities between 0 and 100 and make each mutually exclusive set sum to 100. All confidence values are conservative estimates, not probabilities or guarantees. Mark limited evidence clearly; keep correct score, half-time/full-time and handicap confidence low if unsupported. Never claim absences unless injury data is supplied. The primary matchWinner and pick_outcome must agree. This is uncertain forecasting, never a promise.",
               },
               { role: "user", content: JSON.stringify(footballResults) },
             ],
@@ -300,24 +270,39 @@ Deno.serve(async (request) => {
           const id = Number(prediction.fixture_id);
           const base = providerById.get(id);
           if (!base || !missingIds.includes(id)) return [];
-          const confidence = Math.min(100, Math.max(1, Math.round(Number(prediction.confidence))));
-          const probabilities = prediction.probabilities as Record<string, number>;
-          const rawOutcome = String(prediction.pick_outcome || "").toLowerCase();
-          const pickOutcome = ["home", "draw", "away"].includes(rawOutcome)
-            ? rawOutcome
-            : Object.entries(probabilities).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0];
+          const rawConfidence = Number(prediction.confidence);
+          if (!Number.isFinite(rawConfidence)) return [];
+          const confidence = Math.min(100, Math.max(1, Math.round(rawConfidence)));
+          const rawProbabilities = prediction.probabilities as Record<string, number>;
+          if (!rawProbabilities || !["home", "draw", "away"].every(key => Number.isFinite(Number(rawProbabilities[key])))) return [];
+          const bounded = Object.fromEntries(["home", "draw", "away"].map(key => [key, Math.min(100, Math.max(0, Number(rawProbabilities[key])))]));
+          const sum = Object.values(bounded).reduce((a, n) => a + n, 0);
+          if (sum <= 0) return [];
+          const scaled = Object.entries(bounded).map(([key, n]) => ({ key, exact: n / sum * 100 }));
+          const probabilities = Object.fromEntries(scaled.map(({ key, exact }) => [key, Math.floor(exact)])) as Record<string, number>;
+          const remainder = 100 - Object.values(probabilities).reduce((a, n) => a + n, 0);
+          scaled.sort((a, b) => (b.exact % 1) - (a.exact % 1));
+          for (const item of scaled.slice(0, remainder)) probabilities[item.key] += 1;
+          const pickOutcome = Object.entries(probabilities).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0];
           if (!pickOutcome || !["home", "draw", "away"].includes(pickOutcome)) return [];
+          const selectedName = pickOutcome === "home" ? String(base.home_team) : pickOutcome === "away" ? String(base.away_team) : "Draw";
+          const rawMarkets = prediction.markets && typeof prediction.markets === "object" ? prediction.markets as Record<string, unknown> : {};
+          const markets = {
+            ...rawMarkets,
+            matchWinner: { ...(rawMarkets.matchWinner && typeof rawMarkets.matchWinner === "object" ? rawMarkets.matchWinner as Record<string, unknown> : {}), selection: selectedName, confidence, probabilities },
+            risk: ["Low", "Medium", "High"].includes(String(rawMarkets.risk)) ? rawMarkets.risk : "Medium",
+          };
           return [{
             fixture_id: id,
             home_team: base.home_team,
             away_team: base.away_team,
             competition: base.competition,
             kickoff_at: base.kickoff_at,
-            prediction: String(prediction.prediction).slice(0, 240),
+            prediction: selectedName,
             pick_outcome: pickOutcome,
             confidence,
-            rationale: String(prediction.rationale).slice(0, 600),
-            probabilities,
+            rationale: String(prediction.rationale || "No detailed explanation was returned.").slice(0, 600),
+            probabilities: { ...probabilities, markets, analysis: prediction.analysis || {} },
             model: Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini",
             generated_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -343,15 +328,21 @@ Deno.serve(async (request) => {
     if (!finalResponse.ok) throw new Error("Could not load saved AI predictions.");
     const allRows = await finalResponse.json();
     const originSet = new Set(fixtureIds);
-    const predictions = allRows.filter((row: { fixture_id: number; home_team: string; away_team: string }) => {
+const visibleRows = allRows.filter((row: { fixture_id: number; home_team: string; away_team: string }) => {
       if (!originSet.has(Number(row.fixture_id))) return false;
       const pair = [normalizeTeam(row.home_team), normalizeTeam(row.away_team)].sort().join("|");
       return vipActive || !vipMatchKeys.has(pair);
     });
-    return jsonResponse({ predictions }, 200, origin);
+    const predictions = visibleRows.map((row: Record<string, any>) => {
+      if (vipActive) return row;
+      const value = row.probabilities || {};
+      return { ...row, probabilities: { home: value.home, draw: value.draw, away: value.away, markets: { matchWinner: value.markets?.matchWinner || null }, analysis: { summary: row.rationale || "" } }, plusLocked: true };
+    });
+    return jsonResponse({ predictions, access: vipActive ? "plus" : "free" }, 200, origin);
   } catch (error) {
     console.error("AI match predictions failed:", error instanceof Error ? error.message : "unknown error");
     return jsonResponse({ error: error instanceof Error ? error.message : "AI predictions could not be generated." }, 502, origin);
   }
 });
+
 
