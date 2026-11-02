@@ -2,7 +2,6 @@ const allowedOrigins = new Set([
   "https://amorkim32-dev.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  "null",
 ]);
 
 const responseCache = new Map<string, { expiresAt: number; payload: unknown }>();
@@ -86,9 +85,10 @@ Deno.serve(async (request) => {
     } while (page <= totalPages);
 
     const result = { response: fixtures };
-    responseCache.set(date, { expiresAt: Date.now() + 60_000, payload: result });
+    responseCache.set(date, { expiresAt: Date.now() + (date === new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" }) ? 15_000 : 60_000), payload: result });
     return jsonResponse(result, 200, origin);
   } catch {
     return jsonResponse({ error: "Could not reach the football fixtures provider." }, 502, origin);
   }
 });
+
